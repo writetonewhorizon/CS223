@@ -1,0 +1,155 @@
+* Symbol table (a.k.a. dictionary)
+Set of (key, value) pairs.
+** ADT
+*** symtab new_symtab() 
+*** void free_symtab( symtab )
+*** void insert( symtab table, char* key, void* value )
+*** void* lookup( table, key )
+
+** Demo 14.1_symtab
+
+
+# Local Variables:
+# mode: outline
+# End:
+----------------------------------
+* Symbol table ADT (continued)
+
+** Hash table implementation
+*** Constants
+#define NBuckets 101
+static int dummy;
+const void* NOT_FOUND = &dummy;
+
+*** Types
+typedef struct cell {
+	char* key;
+	void* value;
+	struct cell* next;
+}* cell;
+
+struct symtab {
+   cell bucket[ NBuckets ];
+}
+
+*** Hash function
+#define Multiplier -1664117991L
+static int hash( char* s, int nBuckets )
+{
+  unsigned long hashcode = 0;
+  for ( int i=0; s[i] != '\0'; i++ ) {
+    hashcode = hashcode * Multiplier + s[i];
+  }	    
+  return (hashcode % nBuckets);
+}
+
+*** Issues
+**** Key is copied, value is pointed at
+**** NOT_FOUND
+Returned by lookup to indicate failure
+
+*** Iterators revisited
+Want to iterate over (key, value) pairs.
+Problem is one of modularity.
+**** ADT side
+Knows about structure of table.
+Knows that (key, value) pairs are fields of a cell.
+Knows that cells are linked together in chains.
+**** Client side
+Knows structure of value object.
+Knows what to do with each (key, value) pair.
+
+*** Iterator solution discussed previously
+**** ADT exports functions new_iter(), free_iter(), has_next(), and next().
+**** Client contains the loop.
+
+*** Mapping solution described in text
+map_symtab( fn, table, client_data )
+Calls fn on each (key, value) pair.
+Passes client_data to it.
+
+**** Type of callback function
+typedef void (*symtab_fun) (char* key, void* value, void* client_data );
+
+
+* C issues illustrated by symtab example
+
+** free of a void* pointer
+It is not necessary to know the length or type of the
+object to which a void* points in order to free it.
+As long as it was created by malloc()/realloc(), free()
+will free it correctly.
+
+** result of hash value as defined by C99 standard
+Let n be length of unsigned long (in bits).
+Then Multiplier is converted to the long unsigned
+to which it is congruent mod 2^n, and the resulting
+unsigned multiplication is performed mod 2^n.
+The addition of the charater s[i] depends on whether
+char is signed or unsigned.  If it is signed, it is
+first converted to a long int and then to an unsigned
+long int.  A negative char becomes a very big unsigned.
+If char is unsigned, then it converts to an unsigned
+long of the same (non-negative) value.
+
+** const
+[See handout 12 for a more thorough explanation of const]
+*** A variable of a const type is readonly
+const int size = 12;
+A pointer can be constant, or can point to a constant,
+or both.
+const int* p;	// p points to a readonly int.
+int* const p;	// p points to a r/w int, but p itself can't be changed
+const int* const p;  // p is readonly and points to a readonly variable
+*** Order of type qualifier and type specifier doesn't matter
+int const size = 12;	    // same as above
+int const* p;	 // p points to a readonly int.
+*** Caution with typedef
+typedef int* int_ptr;
+const int_ptr p;	// p is a readonly pointer to a r/w int
+int_ptr const p;	// same
+
+** function types, function pointers, and mapping function
+
+*** Function pointer
+A pointer that points to a function (of a specified type).
+Example:  int (*p) (double, char);
+declares p to be a pointer to a 2-argument function that takes
+double and a char and returns an int.
+
+*** Function types and typedef
+Typedef makes function types less confusing.
+typedef int (fn_dci) (double, char);
+defines "fn_dci" to be the type of a function taking a double and 
+a char to an int.
+The declaration
+fn_dci foo;
+would then declare a prototype for foo, just as if you had written
+int foo( double, char );
+The above example could then be written
+fn_dci* p;
+that is, p is a pointer to a function.  One could then use assignment
+p = &foo;
+to make p point to function foo.
+C allows the '&' to be omitted, as it always converts a function to a
+function reference whenever required by context.
+It is also not necessary to write *p to call the function; p can be
+used instead.
+
+* Symbol tables revisited
+** Cost of abstraction
+The symtab interface assumes key is a string but makes no assumption
+about value.
+In practice, both key and value are part of the user's data object,
+so key ends up being duplicated.
+Iterator returns only key.  
+To get value, one must call lookup() -- extra work.
+
+** Can we get rid of all assumptions about key?
+No, since it's needed for the hash function.
+
+
+
+# Local Variables:
+# mode: outline
+# End:

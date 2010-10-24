@@ -1,0 +1,56 @@
+Yale University
+CPSC 223b: Data Structures (Spring 2008)
+Michael J. Fischer
+----------------------------------------
+
+This directory contains a graphical version of the hex game that the
+hex board data structure "hexboard.c" of PS5 was designed to work
+with.  Rather than simulate the play of Hex by reading pretend mouse
+clicks from a file, this version uses real mouse clicks to play the
+game, and it displays the hex board in a graphics window instead of
+using character graphics.
+
+You can uses these files in two ways.
+
+1.  The file "greference" can be run directly from a Zoo workstation.
+    It opens a Hex Game window and presents a blank hex board.
+    Players alternate turns, starting with Red.  Each click in an
+    empty hexagon is a play by the current player in that square.
+    Mouse clicks in occupied hexagons or off the board are ignored.
+    Debugging output is printed to the console.  Close the window to
+    terminate the program.
+
+    This program creates a hexboard of size 11 with x0 = y0 = 100.0
+    and s = 20.0.  This means that the lower left corner of the
+    displayed board has coordinates (100.0, 100.0), and coordinate
+    values increase from there as one move higher and to the right.
+    Mouse clicks passed to getCellHex() have been translated to this
+    coordinate system, not the native coordinates used by the
+    underlying window system.
+
+2.  "greference" was built using my program "hexboard.o".  You can
+    also link my graphical interface with your own "hexboard.o" to
+    produce an executable command "ghex".  This provides a further way
+    to test your own code since "ghex" should behave just like
+    "greference" except for permitted variations in the debugging
+    output printed to the terminal.
+
+    Here's how to build "ghex":
+
+    a) Copy this "gui" directory to your own working directory.
+       (You can use cp -a for this purpose.)
+
+    b) Compile your "hexboard.c" in the usual way and copy the file
+       "hexboard.o".into the copied gui directory.
+
+    c) Run the script "linkme".
+
+    The script will check that it has the files it needs and then
+    build an executable command "ghex".
+
+Do NOT submit ghex with your assignment.  You are not required to
+produce or use ghex.  This is provided only as a testing and debugging
+aid for your code "hexboard.c".  You are still required to write and
+submit the hex game simulator "game.c" that uses character-based
+graphics as described in the problem assignment.
+

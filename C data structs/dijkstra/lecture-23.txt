@@ -1,0 +1,167 @@
+========================================
+Notes for Lecture 23 - April 17, 2008
+========================================
+
+--------------------------------------------------------------------
+* Graph Representation (continued)
+
+** Adjacency matrix (continue)
+*** Computation of transitive closure
+Let M be n x n Boolean connection matrix of a graph G = (V, E).
+Let I be the identity matrix, where I[i][j] = 1 if i==j and 0 if i!=j.
+Fact:  M^* = (I or M)^{n-1}
+This follows because (I or M)^k = I or M or M^2 or ... or M^k,
+and M^r[i][j] = 1 iff there is a path from node i to node j in G
+of length exactly r.  (The length of a path is the number of edges
+it contains.  A path of no edges from i to i has length 0.)
+
+M^* can be computed by repeated squaring.  Example:
+A1 = M^2 
+A2 = A1^2 = M^4
+A3 = A2^2 = M^8
+A4 = A1 x A3 = M^{10}.
+so M^{10} can be computed using 4 matrix multiplications instead of
+the 9 that would be required by the straightforward method.
+
+** Distance matrix (edge-labeled graph)
+Similar to adjacency matrix, but M[i][j] = d_{i,j}, where d_{i,j} is
+the label of edge (i,j).  If (i,j) is not an edge of G, then M[i][j] =
+infinity, where "infinity" is a special symbol different from any
+possible distance edge label.
+
+*** Distance matrix multiplication.
+If A and B are n x n distance matrices, then
+C = A B (min-plus matrix product) is defined by
+C[i][j] = MIN_{k=1}^n A[i][k] + B[k][j]
+
+*** Interpretation
+**** General
+If C = A B, where A is the distance matrix of G_A = (V, E_A), and B is
+the distance matrix of G_B = (V, E_B), then C[i][j] is the length of
+the shortest two-edge path from i to j, where the first edge belongs
+to E_A and the second edge belongs to E_B.
+**** Special
+If A=B is the distance matrix for G = (V, E) and C = A A = A^2, then
+C[i][j] is the length of the shortest two-edge path from i to j in G.
+If C = A^k, then C[i][j] is the length of the shortest path from i to
+j that consists of exactly k edges of G.
+**** Shortest distance matrix
+Define A^* = I A A^2 A^3 ... , where I is the identity matrix with
+respect to min and +, that is, I[i][j] = 0 if i==j and I[i][j] = infinity
+if i!=j.  A^*[i][j] is the length of the shortest path (of any number of
+edges) from i to j.
+Fact: A^* = I min A min A^2 min ... min A^{n-1}
+(This assumes that all distances are non-negative.)
+Fact: A^* can be computed using O(log n) min-+ matrix multiply
+operations.  Since each matrix multiply takes time O(n^3), the total
+time is O(n^3 log n).
+[Note: The Floyd-Warshall algorithm reduces the time further to
+O(n^3).]
+
+--------------------------------------------------------------------
+* Dijkstra's shortest path algorithm
+
+** Problem:  Find shortest path (if any) in graph between source and sink node
+** Method:
+*** High-level overview
+**** Mark nodes in increasing order of shortest distance from source
+**** If sink gets marked, then output path to sink.
+**** If sink does not get marked, the output "no path".
+
+*** At each stage, nodes are split into three sets:
+**** Marked nodes:  Shortest distance from source is known.
+**** Unmarked neighbors of marked nodes.
+**** Other nodes
+
+*** Fact
+Let e = (u, w, v) be an edge from u to v of weight w.
+Let u be marked and v unmarked.  (v is a neighbor of u.)
+Let c_e = d_u + w, where d_u is u's distance from the source. 
+Let c be the minimum over all c_e such that e is an edge from
+a marked to an unmarked node.
+Then if e = (u w, v) is such an edge and c_e = c, the shortest
+path from source to v has length c, and e is the last edge on
+a shortest path from source to e.
+
+*** Algorithm
+Whenever a node is marked, put all edges e from it into a heap
+ordered by c_e.
+To decide which node to mark next, repeatedly use delete_min()
+from heap to find an edge whose head node (destination) is not
+marked.
+Mark the head node.
+
+** Implementation (see demos/demos-23/1-dijkstra)
+Module Flexbuf implements a function fgetlineFlexbuf that read a line
+of arbitrary length from an input stream and puts it into a
+dynamically-allocated buffer of sufficient size to contain it.
+The Heap module is similar to the one of demos-20/1-heap except
+that mapHeap has been removed, and newHeap takes as an extra parameter
+a function to free a heap element.  This function gets called by
+freeHeap() to release the storage occupied by each remaining heap
+element when the heap itself is to be freed.
+
+
+* Storage management
+
+** Byte alignment
+*** Motivation
+Some processors require, either for efficiency or to work at all,
+that multi-byte operands start at memory addresses that are divisible
+by some alignment constant, generally a small power of 2 like 2, 4, 8,
+or 16.  For example, it might be required that a 4-byte int start at
+an address that is a multiple of 4.
+
+*** Byte alignment effects in C
+The C compiler generall arranges to have byte alignment restrictions
+automatically satisfied.  This manifests itself in several places.
+**** malloc()
+malloc() always returns a pointer that satisfies all of the alignment
+conditions since it doesn't know what the block will later be used for.
+On my x86_64 architecture AMD processor, malloc() always allocates
+storage in multiples of 16 bytes, with the smallest possible storage
+block being 32.  The empirical formula for the amount of storage
+consumed by malloc( n ) is
+
+    max( 32, 16 * ceiling( (n+8)/16 ) )
+
+Thus, if n=24, ceiling( (n+8)/16 ) = 2, so 32 bytes are consumed.
+If n=25, ceiling( (n+8)/16 ) = 3, so 48 bytes are consumed.
+
+The reason for the extra 8 bytes is apparently overhead to manage
+the blocks.  I do not know why the minimum block size seems to be 32
+instead of 16.
+
+**** struct padding
+Padding is added between fields of structures and after the last field
+to ensure that each field has proper byte alignment, both in case of a
+single instance of a structure and for an array of such structures.
+For example, 
+
+    struct foo1 {
+	   char c;
+	   int x;
+    }
+
+has size 8.  c begins at the first byte of the structure, x begins
+at the 4th byte.  There are 3 padding bytes between c and x.  This
+gives x a 4-byte alignment (i.e., its address is a multiple of 4).
+
+    struct foo2 {
+	   char c;
+	   int x;
+	   char d;
+    }
+
+has size 12.  3 bytes of padding follow both c and d.  In an array of
+struct foo2, the int field x is always 4-byte aligned.
+
+Rearranging the fields yields a more compact structure:
+
+    struct foo3 {
+	   char c;
+	   char d;
+	   int x;
+    }
+This has size 8.  There are two padding bytes following d.
+

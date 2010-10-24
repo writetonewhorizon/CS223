@@ -1,0 +1,95 @@
+=======================================
+Notes for Lecture 9 - February 12, 2008
+=======================================
+
+* Control break logic
+** Programming technique for processing blocks of data sharing a key.
+** Abstracts code for start group and end group into functions.
+** Eliminates need for read ahead - each record processed when read.
+** Generalizes to multi-level blocks.
+See demo demos-09/1-ctlbreak.
+
+* Arrays and subscripts (cont.)
+** Creating array storage blocks in dynamic memory
+*** malloc( k * sizeof(T) )
+This creates an array storage block in dynamic memory consisting of k
+data objects of type T and returns a (void*) pointer to it which
+should be cast to type (T*) before use.  Example of normal usage: int*
+A = malloc( k * sizeof(*A) ); Explicit cast to (int*) is implicit in
+the initialization.
+
+*** realloc( ptr, k * sizeof(T) )
+**** How it works
+Same as malloc(), except that it changes the size of the memory block
+pointed to by ptr to be large enough to hold k data objects of size
+sizeof(T).  The block originally pointed to by ptr may be modified, or
+a new block might be allocated and a pointer to it returned instead.
+In the latter case, data is copied from the old block to the new (up
+to the size of the new block, in case it is smaller than the old), and
+the old block is freed.  ptr must be a reference that was returned by
+an earlier call to malloc() or realloc() (or calloc(), which is like
+malloc() except that it initializes the block to zeros).
+**** realloc() does not update pointers
+realloc() does not update any pointers into the old memory block.  If
+a new memory block is allocated, any pointers to the old block become
+invalid and must be updated to point to the new block instead.
+
+*** Return code from malloc() and realloc()
+**** malloc() returns NULL on failure.
+Failure occurs when the system is unable to allocate a block of
+consecutive memory of the requested size.  This normally only happens
+when the program requests a really huge block, or when, because of a
+program bug, a program repeatedly calls malloc() until all available
+memory is used up.
+**** Must always check return value of malloc() and realloc().
+Omitting the check will most likely result in a segmentation fault
+when an attempt is made to reference the NULL pointer that malloc()
+returns on failure.
+**** safe_malloc() and safe_realloc() (in utils)
+They do this check automatically.  safe_malloc() works just like
+malloc() except that it never returns NULL.  Similarly, safe_realloc()
+works just like realloc() except that it never returns NULL.  Both
+call fatal() if the allocation fails.  This isn't always the right
+thing to do since it causes the application to abruptly stop in the
+middle, but at least it stops cleanly with an error message.
+
+*** Out of bounds array references
+**** Program must remember the allocation size
+It is up to the program to remember the size of the objects that it
+has allocated and to take care not to reference memory that lies
+outside of the allocated block.
+**** No automatic bounds check
+There is nothing to prevent out of bounds references to the storage
+block allocated by malloc().
+**** No subscript range checking
+There is nothing to prevent program from referencing A[j] where j is
+negative or j is greater than or equal to the number of elements 
+in the array.
+
+*** valgrind
+**** Purpose
+This is a useful tool for checking use of dynamic memory.
+Always use it on your own homework assignments.
+**** Usage
+> valgrind yourprog arg1 ... argk
+Runs yourprog with given arguments in a special environment that
+checks for improper memory usage.  Reports on three kinds of errors:
+Out of bounds references to memory; lost memory (i.e., memory that is
+inaccessible through pointers in the program), and memory that has not
+been released on program termination.
+**** Grading policy for memory management errors
+I expect you to begin running valgrind on your homework assignments
+before submission to make sure that your program makes no illegal
+memory references and that it frees all dynamically-allocated memory
+upon normal exit.  (I won't insist on freeing all storage in case of a
+fatal error.)
+
+The TA's will begin running valgrind on your submissions and will
+deduct points for programs that make illegal memory references.
+Beginning with PS5, they will also deduct points for programs that
+fail to free all allocated storage upon normal exit.  For PS4, they
+will include such errors in the feedback they give you but will not
+penalize you for them.
+
+See demo demos-09/2-flexdemo for an example of a program that does 
+successfully free all of the memory that it uses.

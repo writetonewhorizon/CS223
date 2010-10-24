@@ -1,0 +1,249 @@
+========================================
+Notes for Lecture 21 - April 10, 2008
+========================================
+
+--------------------------------------------------------------------
+* Tries (continued)
+
+** Implementation of multiway branching trees
+*** Method 1: As overlay to a binary tree
+Each node has down pointer and right pointer (and a father pointer, if needed).
+The down pointer points to the leftmost son of a node.
+The sons comprise a linked list via their right pointers.
+Traversal time gets large with many children.
+*** Method 2: As an array
+Each node stores an array of pointers to its children, indexed by edge label.
+Fast to traverse, but wasteful of space when nodes have only few children.
+*** Method 3: As a hash table (or any other symbol table implementation)
+Goal is to quickly find the node associated with a given edge label.
+Can have a hash table (or other symbol table CDT) at each node.
+
+--------------------------------------------------------------------
+* Comparison of BST and Tries
+** Traversal
+*** BST: Which son to visit determined by a comparison of search keys.
+*** Trie:  Which son to visit is determined by next letter of search key.
+
+--------------------------------------------------------------------
+* Binary Tries and prefix codes
+
+** Definition
+*** A binary trie is a trie over the binary alphabet {0, 1}.
+*** Key is a binary sequence
+
+* Codes
+** Definition
+A code associates a binary string (called a code word) with each
+letter of a finite alphabet.  A string of letters is encoded by
+replacing each letter by its code word.
+** Fixed length code
+All code words are the same length
+*** Example:  8-bit ASCII
+*** Advantage: Code string is easily parsed
+** Variable length code
+*** May be ambiguous
+Suppose 01, 011, 10, 110 are all code words (corresponding to a, b, c, d).
+Then 01110 could be parsed as 01 110 (corresponding to "ad") or as
+011 10 (corresponding to "bc").
+
+** Prefix code
+*** Definition
+A prefix code is a set of binary words such that no code word is a
+proper prefix of another
+*** Prefix property allows easy left-to-right parsing algorithm
+Parsing rule: Given an encoded string x, find unique prefix that is a
+code word, discard, and output its corresponding letter.  Repeat.
+
+*** Representation
+A prefix code is naturally represented as the set of strings that
+label paths from root to a leaf of a binary trie.
+The prefix property is guaranteed since no two leaves correspond to
+words that are prefixes of each other.
+Parsing now reduces to walking down the tree while reading the
+encoded string bit by bit and stopping to output a letter whenever
+a leaf is reached.  (The letter to output is stored at the leaf.)
+
+
+--------------------------------------------------------------------
+* Huffman codes and data compression
+
+** Theory of Huffman codes
+*** Intuition: use short code words for frequently occurring letters
+*** Two approaches to building Huffman code:
+**** Based on probabilities
+Assumes clear text file is randomly selected according to a known
+probability distribution on symbols.  Code depends only on probabilities.
+Works well "on average" if files really come from the assumed distribution.
+**** Based on actual letter frequency
+Code is based on actual letter frequencies in a particular clear text
+file.  A new code is computed for each clear text file.  Is best
+prefix code for that file.  Downside: The code tree must be stored in
+the encoded file, increasing its length and negating some of the
+savings from having an optimal code.
+
+** Huffman algorithm
+*** Read file twice
+First pass, compute letter frequencies.
+Second pass, build Huffman tree.
+Code defined only for bytes that actually occur in the clear text file.
+*** How to build tree
+Start with a leaf node for each byte that occurs.
+Weight of each leaf node is the number of times the symbol occurs.
+Put all leaves into a priority queue (e.g., heap).  This allows
+smallest (least frequent) node to be extracted quickly.
+Repeatedly remove two smallest nodes.
+Make them the two sons of a new internal node.  
+Set weight of new node to sum of weights of two sons.
+Reinsert the new node into the priority queue.
+Stop when all nodes have been combined into a single tree.
+
+** Serialization
+*** Problem
+A Huffman-compressed file contain a description of the
+Huffman code followed by the sequence of encodings of the
+bytes of the original file.
+The Huffman code is represented by a tree.  We need a way
+to describe the tree by a linear sequence of symbols.
+The process of finding such a linearization is called serialization.
+
+*** Why doesn't it work to simply dump memory?
+Pointers refer to memory addresses in current address space.
+When the structure is recreated later, the nodes will in general be in
+different memory locations, so the pointers will be different.
+Serialization is any method for defining the structure in a way
+that will let an "equivalent" structure be recreated later, by another
+program.
+
+*** Recursive definition of serialization of Huffman tree
+Let ser(n) be the serialization (bitstring form) of tree rooted at n.
+If n is a leaf:  ser(n) = 1A, where A is 8-bit ASCII representation of
+the symbol labeling n (value of n).
+If n is an internal node:  ser(n) = 0 ser(n->son[0]) ser(n->son[1]).
+
+** Realization
+This is the reverse of serialization: create structured data from the
+serialization.
+*** Recursive method for realizing Huffman tree
+Read first bit.  If it's a 1, read 8 more bits and build a leaf.  If
+it's a 0, recursively read two trees a and b, and build a new tree
+with a and b as the two sons.
+
+** Special cases for Huffman encoding
+*** Empty clear text file.
+**** Problem
+Frequency of all letters is 0.  Huffman tree (if one is built) has no
+nodes.  Serialization of Huffman tree (by above definition) would be
+the empty bit string.  Encoding of file would be the empty bit string.
+However, the algorithm for realizing a tree does not work since there
+is no way for it to know not to read any bits.
+**** Solution
+Simply define the encoding of the empty clear text file to be the
+empty bit string and dispense with the code tree altogether.
+*** Only one symbol occurs in the clear text file, possibly many times.
+**** Problem
+Huffman tree (if one is built) has only one node, so codeword of that
+node is the empty bit sequence, and the encoding of the file is the
+empty bit sequence, no matter how many times the symbol occurs in the
+file.  This is not an acceptable representation method since the clear
+text file cannot be uniquely reconstructed.
+**** Solution
+Put a dummy node of frequency 0 into the Huffman tree construction.
+This will force the Huffman tree to have a root and two sons -- son[0]
+will be the dummy node; son[1] the real node, so the encoding of the
+one symbol that occurs in the file will be the bit string 1.
+
+** Complete Huffman file-encoding algorithm
+Read clear text file twice.  On first pass, build frequency table.
+Build Huffman code tree.
+Serialize it to the output file.
+Build a code table from it.
+Rewind input file (using rewind()).
+On second pass, encode using code table as with any prefix code.
+
+** File decoding algorithm
+Realize code tree, handling special cases as appropriate.
+Decode remainder of encoded input file as with any prefix code.
+
+
+--------------------------------------------------------------------
+* Expression trees and parsing (textbook, Ch. 14)
+** Recursive definition of expression
+1. Integer constant
+2. Variable name
+3. Expression enclosed in parentheses
+4. Two expressions separated by an operator (+, *, =, etc.)
+** Ambiguity
+What does 2+3*4 mean?  (2+3)*4 or 2+(3*4)?
+
+** Expression tree
+Tree form of expression is unambiguous:
+     * 	        +
+    / \	       / \
+   +   4  or  2   *
+  / \ 	         / \
+ 2   3	        3   4
+
+** Expression evaluator
+Evaluates tree "bottom-up" and attachs a value to each node.  Easily
+written as a recursive procedure, viz. "evaluate left subtree,
+evaluate right subtree, combine two answer using operator at the root.
+
+** Precedence paraser
+
+*** Overview
+Builds parse tree from linear expression.
+Resolves ambiguities based on precedence (binding strength)
+of the operators, e.g.
+x = 2 + 3 * 4
+means
+x = 2 + (3 * 4)
+rather than
+x = (2 + 3) * 4
+Precedence can be thought of as how strong the operator is at 
+trying to grab its operands.  In above example, + and * are fighting
+for the "3".  Since "*" is stronger, it get the "3".
+
+*** Expression trees
+An expression tree reflects the structure of an arithmetic expression.
+**** Node types
+An expression tree is built from three kinds of nodes.
+An integer node corresponds to a literal numeric constant in the expression.
+An identifier node corresponds to a named variable.
+A compound node corresponds to an operator and its associated operands.
+For example, in the expression x = 2 + 3 * 4, x is an identifier, 2, 3, 4 are
+integers, and =, +, * will correspond to compound nodes.
+The main connective is =.  Its node will have two sons.  The left son is
+the identifier node x.  The right son is a compound node labeled +.
+The + node also has two sons.  It's left son is the integer 2.
+Its right son is the compound node *.
+The * node has 3 and 4 as its two sons.
+
+*** Algorithm
+Uses two stacks:  one for operators and one for operands.
+An operand is an identifier, a constant, or a parse tree.
+An operator is an operator symbol (e.g., +, *, =).
+Each operator has an associated precedence.
+The input expression is read left to right, a token at a time.
+An identifier or constant token is moved to the operand stack.
+When an operator token is read, its precedence is determined,
+and the stacks are "forced" down to that precedence level.
+Forcing the stacks means to pop off higher precedence operators from
+the operator stack and operands from the operand stack, form them into
+expression trees, and put the resulting tree(s) back onto the operand
+stack.
+
+In more detail, let op be the top operator on the operator stack.  If
+precedence(op) >= precedence(current operator), then op is popped
+from the operator stack and the the top two operands S, T are popped
+from the operand stack.  A new expression tree is built with op as its
+root and with S and T as its left and right operands.  The new tree is
+then placed back on the operand stack.  This process is repeated until
+the operator stack becomes empty or until the operator on top of the
+operator stack has smaller precedence than the precedence of the current
+operator.
+
+When the end of the expression is reached, the stacks are forced with
+a precedence of 0, which causes all operators to be popped off the
+operator stack and the final expression tree to be left as the sole
+member of the operand stack.
+

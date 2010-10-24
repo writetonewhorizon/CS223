@@ -1,0 +1,18 @@
+CFLAGS = -O1 -Wall -std=c99 -g
+
+OBJ = main.o symtab.o symtab-iter.o symtab-map.o
+
+TARGETS = symtab
+
+all: $(TARGETS)
+
+symtab: $(OBJ)
+	gcc -o $@ $(OBJ)
+clean:
+	rm -f $(TARGETS) *.o
+
+# Dependencies
+main.o: main.c symtab.h
+symtab-iter.o: symtab-iter.c symtab-private.h symtab.h symtab-iter.h
+symtab-map.o: symtab-map.c symtab-private.h symtab.h symtab-map.h
+symtab.o: symtab.c symtab-private.h symtab.h

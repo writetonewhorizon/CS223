@@ -1,0 +1,162 @@
+========================================
+Notes for Lecture 18 - April 1, 2008
+========================================
+
+* Notes on PS8: bits, bytes, FEC, bit operators
+
+** Bits and bytes
+*** Definition
+A byte is an ordered set of 8 bits, each of which can assume one of
+two values, usually written "0" and "1".  There are 2^8 = 256 different
+possible bytes.
+*** Naming bytes
+We need a notation to talk about bytes.  The usual way is to write them
+in lexicographic order and to number them, with 0 being the first byte in
+the list and 255 the last byte.  This numbering coincides with the number
+that one obtains by regarding the byte as a numeral written in base-2 
+radix notation.  For that reason, we may think that a byte IS a number,
+but this tends to blind us to the fact that those same 8 bits can be 
+interpreted in many other ways as well.
+**** ASCII code
+One common interpretation of bytes is as characters and symbols such as
+are found on the keyboard.  The ASCII code is used by C to assign each
+character a byte code.  For example, 'A' is byte number 65.  In C,
+'A' and 65 are constants both naming the same integer.
+*** Accessing bits in C
+**** Conversion to binary representation using arithmetic operations
+In C, the "value" of a byte is its number (if the byte has type unsigned).
+One way to view its bits is to convert it to binary using the operations of
+%2 and /2.  For example, the low-order bit of x is x%2.  The next bit is the
+low-order bit of x/2 and can be obtained as (x/2)%2.  Successive bytes can
+be obtained in a similar way.
+**** Direct access to underlying bits
+C provides special bitwise operators for directly accessing and
+manipulating the bits in a byte (or any of the other primitive storage
+types such as short in, int, etc.)  These operations are much faster and
+more convenient ways to access the bits than using the arithmetic operators.
+(See below.)
+
+** Errors and error correction
+*** Effect of a bit error on a byte
+Random errors can cause bits to get flipped in storage or
+transmission.  Example: x = 00001101 is byte 13.  If the 3rd bit (from
+the left) gets flipped, then it becomes byte 45.  So a one bit change can
+make a big difference to the numeric value of a byte!
+*** Fault tolerance
+Redundancy allows some bit errors to be detected and/or repaired and
+the original data recovered.
+**** Double redundancy
+Suppose x is sent twice.  The receiver compares the two copies.  If
+different, then one knows that an error occurred, but one has no 
+information about which is correct.
+**** Triple redundancy
+Suppose now 3 copies of x are sent.  Imagine the three copies when
+received look like
+00101101
+00001101
+00001101
+In the 3rd column, not all bits are the same, so we know an error occurred.
+Assuming only one error occurred, then the majority value (0 in this case)
+is the correct one.
+**** Hamming code
+PS8 describes a scheme using less redundancy that permits the
+correctiion of a single bit error and the detection of 2-bit errors.
+See ho15 (problem set 8) for a description of this scheme.
+
+** Bitwise operators in C
+C contains 6 bitwise operators:
+*** Bitwise "and" (&)
+The answer has a 1 in a bit position iff both operands have 1.
+Example:
+  00001101 
+& 00100111
+----------
+  00000101
+
+*** Bitwise "or" (|)
+The answer has a 1 in a bit position iff at least one operand is 1.
+Example:
+  00001101 
+| 00100111
+----------
+  00101111
+
+*** Bitwise "exclusive or" (^)
+The answer has a 1 in a bit position iff one operand is 1 and the other is 0
+Example:
+  00001101 
+^ 00100111
+----------
+  00101010
+
+Note:  The 1's indicate bit positions at which the two operands differ.
+
+*** Bitwise "not" (~)
+Each bit of the operand is flipped.
+Example:
+~00001101
+---------
+ 11110010
+
+*** Left shift (<<)
+x << k shifts x left k places.  Bits shifted off left end are discarded.
+0's are shifted in from right.
+Example:
+00001101 << 2
+--------
+00110100
+
+*** Right shift (>>)
+x >> k shifts x right k places.  Bits shifted off right end are discarded.
+0's are shifted in from right if type of x is unsigned.  Leftmost bit is
+copied if x is signed.
+
+Example -- unsigned x
+00001101 >> 2
+--------
+00000011
+
+Example 1 -- signed x
+00001101 >> 2
+--------
+00000011
+
+Example 2 -- signed x
+10001101 >> 2
+--------
+11100011
+
+--------------------------------------------------------------------
+* Bit masks; extracting fields; bit flipping using mask
+
+** Accessing single bits in a word
+For convenience, number bits from low-order to high-order, starting
+with 0, so rightmost bit is bit 0.
+
+In all cases below, assume x and mask are unsigned of same length
+
+*** Test bit k of x
+**** Method 1:  Shift the mask
+mask = 1 << k;
+if ( (x & mask) != 0 ) {...}
+**** Method 2:  Shift the word
+y = (x >> k) & 1;
+y equals bit k of x.
+
+*** Set bit k of x
+mask = 1 << k;
+x |= mask;
+
+*** Clear bit k of x
+mask = 1 << k;
+x &= ~mask;
+
+** Extracting bitfield (k+r-1 ... k) of x
+mask = ~((~0)<<r);  // mask == 000...0011...1 (r 1's)
+y = (x >> k) & mask;
+
+*** Replacing bitfield (k+r-1 ... k) of x with r bits of y
+mask = ~((~0)<<r);  // mask == 000...0011...1 (r 1's)
+x &= (mask << k);   // clear the bit field
+x |= ((y & mask) << k);
+

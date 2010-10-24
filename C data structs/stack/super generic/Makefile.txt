@@ -1,0 +1,35 @@
+# Michael J. Fischer
+# CPSC 223b, Spring 2008
+
+# Specify which compiler to use
+CC = gcc
+
+# Specify options to give to the compiler when translating source to object
+# -g		Generate debugging code, for use with gdb
+# -Wall		Enable all warnings
+# -O1		First level of optimization
+# -std=c99	Adhere to C99 language standard
+# -pedantic	Reject programs using non-standard extensions
+
+CFLAGS = -std=c99 -Wall -pedantic -g -O1
+
+# Object files comprising the project
+OBJ = main.o stack.o util.o
+
+# Targets
+TARGETS = stack
+
+all: $(TARGETS)
+
+# Rule to build executable from object file
+stack: $(OBJ)
+	$(CC) -o $@ $(OBJ)
+
+# Rule to clean up directory by removing generated files
+clean:
+	rm -f $(TARGETS) $(OBJ)
+
+# Dependencies which use default rule to build object from source
+main.o: main.c stack.h util.h
+stack.o: stack.c stack.h util.h
+util.o: util.c util.h

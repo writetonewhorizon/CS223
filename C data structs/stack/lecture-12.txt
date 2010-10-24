@@ -1,0 +1,169 @@
+========================================
+Notes for Lecture 12 - February 21, 2008
+========================================
+
+* Declarations
+We've been using declarations but never talked about them explicitly.
+In the following, T is any non-array type expression (e.g., int, struct Flex, etc.),
+var is any identifier, exp a value-producing expression.
+
+** Variable declaration
+*** Syntax
+**** Uninitialized: T var;
+Declares var to be a variable of type T.
+**** Initialized: T var = exp;
+Declares var to be a variable of type T, and initializes var with value of expression exp.
+*** Semantics
+Allocates one variable of type T on the stack.  Enough memory is
+allocated to hold any value of type T.
+Defines var to be a name for that memory location.
+
+** Array declaration
+*** Syntax
+**** Uninitialized: T var[exp];
+Declares var to be an array of length n with elements of type T, where
+n is the value of exp.
+**** Initialized: T var[exp] = { exp0, exp1, ... };
+Declares var to be an array of length n with elements of type T, where
+n is the value of exp.  The n elements are initialized with the values
+of the expressions from the initializer list, as far as they go.
+Remaining elements are initialized with default value (usually 0).
+**** Initialized: T var[] = { exp0, ex1, ... };
+Declares var to be an array of length n with elements of type T, where
+n is the number of initializers provided.  The n elements are
+initialized with the values of the expressions from the initializer
+list.
+*** Semantics
+All three cases: allocates n consecutive variables of type T on the stack.
+Defines var to be a name for the reference to the first allocated
+variable, which has type T*.
+
+** Typedef 
+*** Syntax
+Same as variable declaration, except preceeded by word "typedef", and
+type name appears where variable name would ordinarily appear.
+**** typedef T Name;
+Defines Name as a synonym for the non-array type described by T.
+**** typedef T Name[n];
+Defines Name as a synonym for the array type T()[n].
+**** typedef T Name[];
+Defines Name as a synonym for T*.
+*** Semantics
+Defined types can be used anywhere a type is normally required.
+
+** Struct declaration
+A struct declaration has two parts
+*** Field definitions
+**** Example:
+struct polar {
+    double radius;
+    double angle;
+};
+**** Type is "struct polar"
+"polar" is called a tag.  It is not a type; the type is "struct
+polar".
+**** Variables of type struct polar;
+Can use struct types to declare variables in the normal way,
+Example:
+struct polar point;
+declares point to be a variable of type struct polar.
+Its total size is large enough to hold two doubles.
+Its memory is subdivided into fields.
+Each field is a variable.
+**** Use of typedef
+typedef is often used with struct types to give a simple name
+to the type.
+Example:
+struct polar Polar;
+Now one can write "Polar" instead of "struct polar" to name the type.
+Polar point;
+declares point to be a variable of type struct polar.
+**** Omitting type tags
+The type tag can be omitted, resulting in an anonymous struct.
+Example:
+struct {
+    double radius;
+    double angle;
+};
+is a legal struct definition, and the entire expression is also a
+"name" for the new type, but every occurrence of the expression defines
+a different type.
+Anonymous struct definitions are normally only used with typedef.
+Example:
+typedef struct {
+    double radius;
+    double angle;
+} Polar;
+Now, the only way to refer to the type is with the defined name
+"Polar", but that is sufficient for most purposes.
+**** Opaque types
+One often wants to use a struct to implement a data object that
+contains "hidden" data, intended for use by the implementation code
+for a module but not to be used by the client of the module.
+***** Interface file
+Defines the object type as a pointer to an opaque type.
+Example:  typedef struct stack* Stack;
+**** Implementation file
+Defines the internal structure of the type.
+Example:
+struct stack {
+	int* elements;
+	int cursize;
+	int maxsize;
+};
+Note that no typedef is needed here.  Now we have two different types:
+struct stack is the structure, and Stack is a pointer to a struct stack.
+
+** Examples and review to test your understanding of the above
+1. char buf[100]; is an array declaration.  It allocates 100
+variables of type char on the stack, creates a reference of type
+char* to the first of them, and defines the identifier "buf" to be
+a name for that reference.
+
+2. buf is not a pointer variable but is a named constant whose
+"value" is a reference.
+
+3. A reference and a variable are not the same thing.  A variable
+is a piece of storage, named or not.  A reference is the "address"
+of a variable.  It is a value that can be copied, passed to
+functions, and used in certain computations.  It's like the
+difference between your cell phone and the telephone number of your
+cell phone.  You can give somebody your telephone number, but you
+still have the phone.  That person can give your telephone number
+to somebody else.  Whoever has your phone number can call your
+phone, but there is only one phone in question.
+
+4. One can compute new references from old ones.  In the above
+example, buf is a reference to the first of 100 consecutive variables.
+The value of the expression buf+1 is a reference to the second of
+those variables, buf+2 is a reference to the third, etc.
+
+5. An ordinary (non-array) declarations int x; allocates one
+variable of type int on the stack and defines the identifier "x" to
+be a name for that variable.
+
+6. If x is any variable, named or not, then &x is a reference to
+that variable.  Since buf[3] is the 4th variable in the buf array,
+&buf[3] is a reference to the 4th variable.  An equivalent
+expression for computing that reference is buf+4.
+
+7. Given any reference-valued expression e, *e is the variable to
+which the reference refers.  Since buf is a constant
+reference-valued expression, *buf is the first variable in the char
+array.  Another name for that variable is buf[0].
+
+8. Let char* p; be a pointer variable, and suppose the current
+value of "p" is the reference "buf".  When "p" appears on the right
+hand side of an assignment statement or as an argument to a
+function, the meaning is to fetch the contents of p (a reference
+value) and to use that value in calculating the right hand side of
+the assignment or as the argument to the function.  In these
+contexts, "p" and "buf" behave identically, tempting one to believe
+that "buf" is a pointer.  However, only "p" can appear on the left
+side of an assignment statement, because the left side must be a
+variable, not a reference.  Hence, p=buf; is a legal assignment,
+but buf=p; is not.  Anything that is a variable by these
+definitions can appear on the left hand side, e.g. buf[3] = 'a'; or
+p[3] = 'a'; (They both do the same thing as long as "p" contains
+the reference "buf".)
+

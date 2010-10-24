@@ -1,0 +1,27 @@
+#!/bin/tcsh -f
+#
+# Links together the files to make the graphical hex program.
+# User must supply the file "hexboard.h"
+
+set target=(ghex)
+set needed=(hexboard.o)
+set obj=(gmain.o ggame.o util.o)
+
+if ( ! -e $needed ) then
+    echo Please copy your \"$needed\" file to this directory and rerun
+    exit 1
+endif
+
+foreach x ( $obj )
+    if ( ! -e $x ) then
+	echo Missing file \"$x\" - please copy from PS5 directory and rerun
+	exit 1
+    end
+endif
+
+# All the needed pieces are here, so run it
+set cmd=(gcc -o $target $obj $needed `pkg-config --libs gtk+-2.0`)
+echo $cmd
+$cmd
+if ( $status == 0 ) echo Command \"$target\" built 
+

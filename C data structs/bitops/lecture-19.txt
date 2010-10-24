@@ -1,0 +1,164 @@
+========================================
+Notes for Lecture 19 - April 3, 2008
+========================================
+
+* C operators
+** From highest to lowest, the precedence is:
+   {} [] -> .
+   unary operators: - ++ -- ! & * ~ (type) sizeof
+   * / %
+   + - 
+   << >> (shift)
+   < <= > >= (relational)
+   == != (equality)
+   & (bitwise and)
+   ^ (bitwise exclusive or)
+   | (bitwise or)
+   && (logical and)
+   || (logical or)
+   ?: (conditional expression)
+   = op= (assignment)
+   , (sequencing)
+
+** Assignment
+Assignment produces a result which can be used by other operators.
+*** Shorthand assignment, e.g., +=  [discussed previously]
+*** Increment/decrement  [discussed previously]
+*** Postincrement delays [not covered in lecture]
+New value of variable after postincrement (++ operator) not always
+stored back immediately
+Example: x=5;  y = x++ + x++;
+could result in y==10 or y==11, depending on whether x was updated
+immediately or not.
+It could also end up with x=6 or x=7 for the same reason.
+
+** Evaluation rules
+*** Most operators (e.g. +) can evaluate their operands in either order
+*** Logical operators && and || use "shortcircuit" evaluation
+**** Left operand is evaluated first.
+**** If result is determined, evaluation of right operand is omitted.
+Example: (2 == 3) && expr is false no matter what expr would return,
+so expr is not evaluated.
+**** Evaluation of opeands isn't necessarily left to right
+Example:  (a && b) || c
+If a evaluates to false, then b is skipped, but c is evaluated.
+If a evaluates to true, then b is evaluated, and if it is true then c
+is skipped, but if it is false, then c is evaluated.
+
+--------------------------------------------------------------------
+* Tricks with bit operators
+** Constructing masks
+In the following, we number bits right to left, with 0 being the
+rightmost (low-order) bit.  N is the length of the bit string (32 for
+an unsigned int).
+*** A mask with 1 at position k; 0 elsewhere.
+Example:  0...0000000010000
+m1 = (1<<k);
+*** A mask with 1 in positions 0...(k-1), 0 in positions k...(N-1)
+Example:  0...0000000001111
+m2 = (1<<k)-1;
+*** A mask with 1 in positions k...(N-1) and 0 in positions 0...(k-1)
+Example:  1...1111111110000
+m3 = ~m2 = ~((1<<k)-1);
+*** Masks with alternating 0 blocks and 1 blocks of length power of 2.
+m4a = (1<<16)-1;  0000 0000 0000 0000 1111 1111 1111 1111
+m4b = m4a<<8;     0000 0000 1111 1111 1111 1111 0000 0000
+m41 = m4a^m4b;    0000 0000 1111 1111 0000 0000 1111 1111
+m4c = m4<<4;      0000 1111 1111 0000 0000 1111 1111 0000
+m42 = m4^m4c;     0000 1111 0000 1111 0000 1111 0000 1111
+
+** Removing rightmost 1 bit
+Example:  
+x:        00001101001101000
+x-1:      00001101001100111
+x&(x-1);  00001101001100000
+
+** Inserting a bit into a bit string at position k
+Example (space in middle of bit strings is just for visual clarity):
+x:              00001101001 101000
+k=6;
+m1 = (1<<k)-1;  00000000000 111111
+m2 = ~m1;       11111111111 000000
+y1 = x&m1;      00000000000 101000
+y2 = x&m2;      00001101001 000000
+(y2<<1)|y1;     00011010010 101000
+
+** Parity of 1 bits in a bit string
+Problem is to compute the XOR of the bits in x, i.e., 1 if x contains
+an odd number of 1's in its binary representation, and 0 if it
+contains an even number of 1's.
+Example:  parity( 000110101 ) = 0
+
+** Population count
+Problem is to count the number of 1 bits in x.
+Example:  count( 000110101 ) = 4
+
+** Note:  parity = count mod 2, i.e., the low-order bit of the count
+
+** Algorithms
+Many clever algorithms were presented in class.  Actual working
+implementations of what was presented appear in
+demos_17/17.1_bitops/bitops.c
+
+Here's an example of what is going on in popcount6() and popcount7().
+Let x = 0000 1101 0011 0100 0111 1101 1110 0011
+count(x) = 17.  Here's how it's obtained.
+
+Phase 1:
+x:               00 00 11 01 00	11 01 00 01 11 11 01 11	10 00 11
+m1:              01 01 01 01 01	01 01 01 01 01 01 01 01	01 01 01
+
+xa = x&m1:       00 00 01 01 00	01 01 00 01 01 01 01 01	00 00 01
+xb = (x>>1)&m1:  00 00 01 00 00	01 00 00 00 01 01 00 01	01 00 01
+x1 = xa + xb:    00 00 10 01 00 10 01 00 01 10 10 01 10 01 00 10
+Interpret each pair as a binary number:
+x1:               0  0  2  1  0  2  1  0  1  2  2  1  2  1  0  2
+The sum of these 16 numbers is 17 = count(x).
+
+Phase 2:
+x1:              0000 1001 0010 0100 0110 1001 1001 0010
+m2:              0011 0011 0011 0011 0011 0011 0011 0011
+
+xa = x1&m2:      0000 0001 0010 0000 0010 0001 0001 0010
+xb = (x1>>2)&m2: 0000 0010 0000 0001 0001 0010 0010 0000
+x2 = xa + xb:    0000 0011 0010 0001 0011 0011 0011 0010
+Interpret each 4-group as a binary number:
+x2:                 0    3    2    1    3    3    3    2
+The sum of these 8 numbers is 17 = count(x).
+
+Phase 3:
+x2:              00000011 00100001 00110011 00110010
+m3:              00001111 00001111 00001111 00001111
+
+xa = x2&m3:      00000011 00000001 00000011 00000010
+xb = (x2>>4)&m3: 00000000 00000010 00000011 00000011
+x3 = xa + xb:    00000011 00000011 00000110 00000101
+Interpret each 8-group as a binary number:
+x3:                     3        3        6        5
+The sum of these 4 numbers is 17 = count(x).
+
+Phase 4:
+x3:              0000001100000011 0000011000000101
+m4:              0000000011111111 0000000011111111
+
+xa = x3&m4:      0000000000000011 0000000000000101
+xb = (x3>>8)&m4: 0000000000000011 0000000000000110 
+x4 = xa + xb:    0000000000000110 0000000000001011
+Interpret each 16-group as a binary number:
+x4:                             6               11
+The sum of these 2 numbers is 17 = count(x).
+
+Phase 5:
+x4:              00000000000001100000000000001011
+m5:              00000000000000001111111111111111
+
+xa = x4&m5:      00000000000000000000000000001011
+xb = (x4>>16)&m5:00000000000000000000000000000110
+x5 = xa + xb:    00000000000000000000000000010001
+x5, interpreted as an integer, is the answer 17.
+
+Each phase does a shift, 2 & operations, and an addition.  Hence, the
+count(x) is computed using a total of 20 computational operations (not
+counting data movement).  This is far less than writing a counting
+loop to add up the bits one at a time.
+

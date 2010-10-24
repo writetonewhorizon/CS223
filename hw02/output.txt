@@ -1,0 +1,182 @@
+#
+#	Created by: Douglas von Kohorn
+#	Course: CS223
+#	Term: Spring 2008
+#	Problem Set #2
+#
+
+dev5@macaw:~/cs223/projects/HW2> ./cake
+How many guests are you planning on serving? 0
+Invalid input, please try again.
+How many guests are you planning on serving? -1
+Invalid input, please try again.
+How many guests are you planning on serving? 2147483648
+Invalid input, please try again.
+How many guests are you planning on serving? d
+Invalid input, please try again.
+How many guests are you planning on serving? DWE DWED
+Invalid input, please try again.
+How many guests are you planning on serving? 123
+What is your desired serving size? 0
+Invalid input, please try again.
+What is your desired serving size? -1
+Invalid input, please try again.
+What is your desired serving size? 8.1
+Invalid input, please try again.
+What is your desired serving size? .9
+Invalid input, please try again.
+What is your desired serving size? d
+Invalid input, please try again.
+What is your desired serving size? DWE DWED
+Invalid input, please try again.
+What is your desired serving size? 4
+---------------------Round----------------------------------------------
+Layer Size | Area Used | Portions Available | Total Portions | Total Area
+6          | 28.2743         | 7                  | 7              | 28.2743
+8          | 50.2655         | 12                  | 19              | 78.5398
+10          | 78.5398         | 19                  | 38              | 157.08
+12          | 113.097         | 28                  | 66              | 270.177
+14          | 153.938         | 38                  | 104              | 424.115
+16          | 201.062         | 50                  | 154              | 625.177
+-------------------------Square------------------------------------------
+Layer Size | Area Used | Portions Available | Total Portions | Total Area
+6          | 36         | 9                  | 9              | 36
+8          | 64         | 16                  | 25              | 100
+10          | 100         | 25                  | 50              | 200
+12          | 144         | 36                  | 86              | 344
+14          | 196         | 49                  | 135              | 540
+A round cake of size 16 for serving 123 guests will yield 154 portions. It will cost $325.00.
+A square cake of size 14 for serving 123 guests will yield 135 portions. It will cost $307.00.
+dev5@macaw:~/cs223/projects/HW2>
+
+--------------------------------------------------------------------------------------------
+
+dev5@macaw:~/cs223/projects/HW2> ./cake
+How many guests are you planning on serving? 1
+What is your desired serving size? 1
+---------------------Round----------------------------------------------
+Layer Size | Area Used | Portions Available | Total Portions | Total Area
+6          | 28.2743         | 28                  | 28              | 28.2743
+-------------------------Square------------------------------------------
+Layer Size | Area Used | Portions Available | Total Portions | Total Area
+6          | 36         | 36                  | 36              | 36
+A round cake of size 6 for serving 1 guests will yield 28 portions. It will cost $16.00.
+A square cake of size 6 for serving 1 guests will yield 36 portions. It will cost $22.00.
+dev5@macaw:~/cs223/projects/HW2>
+
+
+----------------------------------------------------------------------------------------------
+
+dev5@macaw:~/cs223/projects/HW2> ./cake
+How many guests are you planning on serving? 10
+What is your desired serving size? 4
+---------------------Round----------------------------------------------
+Layer Size | Area Used | Portions Available | Total Portions | Total Area
+6          | 28.2743         | 7                  | 7              | 28.2743
+8          | 50.2655         | 12                  | 19              | 78.5398
+-------------------------Square------------------------------------------
+Layer Size | Area Used | Portions Available | Total Portions | Total Area
+6          | 36         | 9                  | 9              | 36
+8          | 64         | 16                  | 25              | 100
+A round cake of size 8 for serving 10 guests will yield 19 portions. It will cost $43.00.
+A square cake of size 8 for serving 10 guests will yield 25 portions. It will cost $59.00.
+dev5@macaw:~/cs223/projects/HW2>
+
+
+------------------------------------------------------------------------------------------------
+
+
+dev5@macaw:~/cs223/projects/HW2> ./cake
+How many guests are you planning on serving? 30
+What is your desired serving size? 4
+---------------------Round----------------------------------------------
+Layer Size | Area Used | Portions Available | Total Portions | Total Area
+6          | 28.2743         | 7                  | 7              | 28.2743
+8          | 50.2655         | 12                  | 19              | 78.5398
+10          | 78.5398         | 19                  | 38              | 157.08
+-------------------------Square------------------------------------------
+Layer Size | Area Used | Portions Available | Total Portions | Total Area
+6          | 36         | 9                  | 9              | 36
+8          | 64         | 16                  | 25              | 100
+10          | 100         | 25                  | 50              | 200
+A round cake of size 10 for serving 30 guests will yield 38 portions. It will cost $85.00.
+A square cake of size 10 for serving 30 guests will yield 50 portions. It will cost $116.00.
+dev5@macaw:~/cs223/projects/HW2>
+
+
+----------------------------------------------------------------------------------------------------
+
+
+dev5@macaw:~/cs223/projects/HW2> ./cake
+How many guests are you planning on serving? 50
+What is your desired serving size? 4
+---------------------Round----------------------------------------------
+Layer Size | Area Used | Portions Available | Total Portions | Total Area
+6          | 28.2743         | 7                  | 7              | 28.2743
+8          | 50.2655         | 12                  | 19              | 78.5398
+10          | 78.5398         | 19                  | 38              | 157.08
+12          | 113.097         | 28                  | 66              | 270.177
+-------------------------Square------------------------------------------
+Layer Size | Area Used | Portions Available | Total Portions | Total Area
+6          | 36         | 9                  | 9              | 36
+8          | 64         | 16                  | 25              | 100
+10          | 100         | 25                  | 50              | 200
+A round cake of size 12 for serving 50 guests will yield 66 portions. It will cost $143.00.
+A square cake of size 10 for serving 50 guests will yield 50 portions. It will cost $116.00.
+dev5@macaw:~/cs223/projects/HW2>
+
+
+----------------------------------------------------------------------------------------------------
+
+
+
+dev5@macaw:~/cs223/projects/HW2> ./cake
+How many guests are you planning on serving? 100
+What is your desired serving size? 4
+---------------------Round----------------------------------------------
+Layer Size | Area Used | Portions Available | Total Portions | Total Area
+6          | 28.2743         | 7                  | 7              | 28.2743
+8          | 50.2655         | 12                  | 19              | 78.5398
+10          | 78.5398         | 19                  | 38              | 157.08
+12          | 113.097         | 28                  | 66              | 270.177
+14          | 153.938         | 38                  | 104              | 424.115
+-------------------------Square------------------------------------------
+Layer Size | Area Used | Portions Available | Total Portions | Total Area
+6          | 36         | 9                  | 9              | 36
+8          | 64         | 16                  | 25              | 100
+10          | 100         | 25                  | 50              | 200
+12          | 144         | 36                  | 86              | 344
+14          | 196         | 49                  | 135              | 540
+A round cake of size 14 for serving 100 guests will yield 104 portions. It will cost $222.00.
+A square cake of size 14 for serving 100 guests will yield 135 portions. It will cost $307.00.
+dev5@macaw:~/cs223/projects/HW2>
+
+
+--------------------------------------------------------------------------------------------------
+
+
+
+dev5@macaw:~/cs223/projects/HW2> ./cake
+How many guests are you planning on serving? 123
+What is your desired serving size? 4
+---------------------Round----------------------------------------------
+Layer Size | Area Used | Portions Available | Total Portions | Total Area
+6          | 28.2743         | 7                  | 7              | 28.2743
+8          | 50.2655         | 12                  | 19              | 78.5398
+10          | 78.5398         | 19                  | 38              | 157.08
+12          | 113.097         | 28                  | 66              | 270.177
+14          | 153.938         | 38                  | 104              | 424.115
+16          | 201.062         | 50                  | 154              | 625.177
+-------------------------Square------------------------------------------
+Layer Size | Area Used | Portions Available | Total Portions | Total Area
+6          | 36         | 9                  | 9              | 36
+8          | 64         | 16                  | 25              | 100
+10          | 100         | 25                  | 50              | 200
+12          | 144         | 36                  | 86              | 344
+14          | 196         | 49                  | 135              | 540
+A round cake of size 16 for serving 123 guests will yield 154 portions. It will cost $325.00.
+A square cake of size 14 for serving 123 guests will yield 135 portions. It will cost $307.00.
+dev5@macaw:~/cs223/projects/HW2>
+
+
+-------------------------------------------------------------------------------------------------

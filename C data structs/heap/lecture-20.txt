@@ -1,0 +1,154 @@
+========================================
+Notes for Lecture 20 - April 8, 2008
+========================================
+
+* Trees -- general concepts
+
+** Nodes
+Leaf, internal node, root.
+
+** Node relationships
+Father, son, brother.
+Ordered or unordered children.
+
+** Structure
+Branching degree of nodes.
+Binary tree: all nodes have <= 2 children.
+Strict binary: #children == 0 or 2.
+Height, depth of node, balance.
+# nodes of complete binary tree of height h.
+
+
+* Heaps
+** Node contains key and value.
+** Tree is balanced binary tree with last level filled from left.
+** Heap property:
+Smallest key is at root.
+Key at each internal node is >= key of each child.
+
+** Operations:
+*** isEmptyHeap( Heap h )
+Returns true if heap is empty, false otherwise.
+*** insertHeap( Heap h, void* v ).
+Inserts value v into heap.
+*** deleteMinHeap( Heap h )
+Returns a minimal element of the heap.
+*** newHeap( comp_fn comp ).
+Creates a new Heap ordered according to the comparison function comp.
+*** freeHeap( heap h )
+Frees the heap.
+
+** Algorithms
+
+*** Insert
+Store heap as a flex array.
+Increment heap size n.
+Expand flex array if necessary so that node[n] exists.
+Let v be the new value to be inserted.  Call node[n] a "hole" (since 
+no value has been assigned to it yet.)
+Walk up heap from node[n] towards root.
+At each step of the walk, move the value from the father of the hole
+into the hole.  This has effect of moving the hole up the tree.
+Stop moving the hole when its father is <= v, and place v
+in the hole.
+
+*** Delete
+Free data in root (node[1]), if necessary.
+Move data from node[n] to a temporary v.
+Decrement heap size n.
+The root now has a hole.
+Walk down from root, restoring heap condition.
+At each step of the walk, move the value from the smaller of the
+two sons into the hole and walk down to that son.
+This has effect of moving the hole down the tree.
+Stop when v <= the value of the two sons of the hole, and place
+v in the hole.
+
+** Implementation: See demos-20/1-heap
+
+
+* Binary search trees
+
+** Nodes contain keys used for navigating the tree.
+** Data stored either at all nodes or just at leaves.
+** Tree is strict binary
+Internal nodes have two children.
+Leaves have no children.
+
+** BST property:
+Key of left son <= key of node <= key of right son.
+
+** Operations
+*** insertBST( bst, key, value )
+Inserts (key, value) pair into bst.
+*** lookupBST( bst, key )
+Returns value associated with key.
+*** deleteBST( bst, key )
+Removes (key, value) pair from bst.
+*** Iterators: init_iter(), has_next(), next()
+Returns keys in non-decreasing order.
+*** newBST()
+*** freeBST()
+
+** Representation
+Node is struct with fields: key, value, father, left, right
+left/right are pointers to node; NULL if undefined.
+Tree is struct with pointer to root and possibly other information.
+
+** Algorithms
+*** Lookup
+Proceeds by walking down tree from root.
+Key of current node is compared with search key.
+If equal, current node's value is returned.
+If search key is smaller, continue search at left son.
+Otherwise, continue search at right son.
+Lookup fails if key not found and search can't continue.
+*** Insert
+Same as lookup.
+If node found, then key already exists, so replace value.
+If node not found, add new node as left or right son of
+leaf where lookup stopped, depending on the keys.
+*** Delete
+Same as lookup to find node.
+Remove node.  Replace by rightmost (largest) node of left subtree.
+Relink.
+
+** Balance
+In a balanced tree of n nodes, depth of nodes is about log(n).
+In worst case, depth is n-1.
+Worst case occurs if nodes are inserted in increasing order.
+*** Rotations
+Rotation on edge (p, q)::
+       p
+      / \
+     q   C
+    / \
+   A   B
+replaced by
+     q
+    / \
+   A   p
+      / \
+     B   C
+Rotations can be used to rebalance an unbalanced tree.
+
+*** Balance conditions
+Goal:  Keep tree height small (O(log n)).
+**** AVL trees (in text)
+**** Splay trees
+**** Red-black trees
+1. Every node has a key.
+2. The key of any node is greater than the key of its left 
+   child and less than the key of its right child.
+3. Every node is colored either red or black.
+4. Every red node that is not a leaf has only black children.
+5. Every path from the root to a leaf contains the same number of black nodes.
+6. The root node is black. 
+
+* Tries
+** Properties
+*** Nodes can have multiple children.
+*** Edges are labeled with letter from a finite alphabet.
+*** All nodes store data items.
+*** Sequence of edge labels leading to a node form the key for that node.
+

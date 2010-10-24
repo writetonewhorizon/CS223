@@ -1,0 +1,74 @@
+======================================
+Notes for Lecture 8 - February 7, 2008
+======================================
+
+* Arrays and subscripts
+
+** Array storage block of type T
+Consists of a consecutive sequence of data objects (unnamed variables)
+of type T.  If the first object is at address a, then subsequent
+objects in the sequence are at addresses a+k, a+2k, a+3k, ..., where k
+= sizeof(T).
+See demo demos-08/1-scan.
+
+** Accessing object in an array
+*** References to objects of an array
+If e is a reference of type T to the first data object in an array
+storage block, then e, e+1, e+2, e+3 are references to the successive
+data objects in the block.
+*** Subscript notation
+**** Syntax:  e[k]
+Here e is a reference-valued expression of type T and k an integer.
+**** Semantics: Same as *(e+k)
+Thus, e[k] is the variable of type T at position k in the array
+storage block, where variables are numbered beginning with 0.  
+Can use e[k] just like any other variable of type T.
+Example: e[k] = e[k-1] + 3;
+Example: &e[k] is a reference to e[k].  It is the same as (e+k).
+**** Usage
+Subscript notation is clearer and more natural for referencing the
+data objects in an array storage block.
+Use it in preference to *(e+k).
+See demo demos-08/2-ptrargs and demos-08/4-smooth.
+
+* Command line arguments
+** String arguments passed by shell from command line to the program
+** Example:  mycommand foo 123   has two string arguments: "foo" and "123".
+** Main program must have the prototype:
+int main( int argc, char* argv[] )
+*** argc:  number of strings in argv[]
+*** argv:  strings passed in argv[0]...argv[argc-1].
+*** argv[0]: leaf name or full path name used to invoke the command
+*** argv[1]: first argument following command name
+*** argv[2]: second argument following command name, etc.
+** Example:
+mycommand foo 123  would result in argc==3 and argv[0]...argv[2] containing
+three strings:  "mycommand", "foo", and "123".
+See demo demos-08/3-cmdline.
+
+* Files and streams
+** Definitions:
+A file is a sequence of bytes stored on disk.
+An input stream is a source of bytes from a file, keyboard, or other device
+An output stream is a sink of bytes, going to a file, screen, or other device
+** Three streams are open by default:
+*** stdin (standard input)
+*** stdout (standard output)
+*** stderr (standard error) [we haven't discussed this yet]
+** fopen()
+*** creates a new stream from/to a file
+*** Return type of fopen() is FILE*.  (FILE is defined in <stdio.h>.)
+*** Use errno and perror() or strerror to identify and/or report error.
+** Open for reading: fopen( filename, "r" )
+*** filename is string giving name of a file
+*** "r" specifies to open the file for reading
+*** fopen returns NULL if it fails to open the file
+*** fopen creates a new input stream if successful and returns a pointer to it.
+** reading from a stream
+*** getchar() and scanf() read from stdin
+*** getc(), fgetc(), and fscanf() take an extra stream argument and read from it
+*** ungetc() allows one character to be put back into stream
+*** scanf() can be used to skip fields of input using "*" modifier
+Example:  scanf( "%*s" ); skips forward to first whitespace following
+          non-whitespace
+See demo demos-08/5-files

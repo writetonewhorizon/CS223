@@ -1,0 +1,211 @@
+========================================
+Notes for Lecture 22 - April 15, 2008
+========================================
+
+--------------------------------------------------------------------
+* Expression trees and parsing (continued)
+
+** Direct precedence evaluator
+A precedence evaluator is a precedence parser that evaluates the
+expression as it goes rather than building an expression tree.  The
+demo code presented in class evaluates identifier-free expressions,
+where the constants can be arbitrary doubles, and the allowed
+operators are +, -, *, /, %, ^, (, ).
+
+(Demos/demos-22/1-prec-C presented in class.)
+
+--------------------------------------------------------------------
+* Overview of Problem Set 9 (Huffman code)
+** Furnished modules
+*** Bit streams
+**** Padding conventions
+Pack bits 8 per byte.  Append 1-byte integer equal to count of #
+padding bits in last (partial) data byte.
+**** Ibitstream
+Allows reading a bit stream one bit at a time
+**** Obitstream
+Allows writing to a bit stream.
+** Modifications to prefix code needed to implement Huffman code
+
+--------------------------------------------------------------------
+* Testing code (general remarks)
+** Method
+*** Run program under different input sets
+*** Verify that operation is correct on each input set
+
+** Goals of test
+*** Cause each line of code to be executed (not always easy)
+*** Try both "normal" and "extreme" cases
+*** Make sure you know what the correct output/behavior is
+
+** Testing ADT implementations
+*** Can't run code by itself; a client program is needed
+*** Client's job is to test, not to do anything useful
+*** As minimum, each public function must be tested
+
+** Design for testing
+*** Instrumentation
+Code can be "instrumented" to facilitate testing
+*** Additional outputs
+Extra outputs might be produced to make it easier to verify correct
+operation
+*** Expanded public interface
+Public interface to ADT might be expanded to allow direct access to
+parts of program not normally made accessible.
+
+--------------------------------------------------------------------
+* Representing an expression tree
+
+** Expression ADT
+*** Types: integer, identifier, compound
+Logically, an expression tree consists of three differnt types of
+nodes: integer, identifier, and compound.  (See lecture 22 notes.)
+*** Constructors and selectors for each type
+Each node type has its own constructors and selectors appropriate to
+that kind.  Constant nodes have a value.  Identifier nodes have an
+associated symbol (which can be looked up in a symbol table to get or
+store a value).  Compound nodes have an operator, a precedence, and a
+left and right subtree.
+
+** Expression CDT (implementation) and union type constructor in C
+The expression CDT (concrete data type, to use the book's terminology)
+implements the expression ADT.
+Question: How does one represent the three node types?
+
+** Solution 1: All nodes have same C data type
+Only one node type:  struct node.
+This structure has many fields:
+     tag tells which kind of node it is.
+     value gives the numeric value in case of a constant node
+     id gives the string name in case of an identifier node
+     symbol, precedence, left and right give the operator symbol,
+         precedence, and the left and right sons in case of a compount
+         node.
+Each node has all of the fields needed by any of the three types.
+Only some are needed for each node type; the rest are unused.
+Wasteful of storage.
+
+** Solution 2: Three types of nodes
+Three different node types: struct const_node, struct id_node, struct
+compound_node Each type has only the fields needed for that node type.
+Problem: The sons of a compound node can be any of the three node
+kinds.  What type are they?
+*** void* pointers
+Can make the son pointers be of type void*, but now the problem is in
+knowing what kind of node they point at, for the pointer must be cast
+to the right type before the fields of that node can be extracted.
+How can we do this?
+**** Associate tag field with each pointer in compound node
+An obvious idea is to put a tag field into each of the three node
+types which identifies its own type, just as we did in solution 1
+above.  
+Problem: In order to read the tag field of a node pointed to
+by a void* pointer, one must first cast the pointer to an appropriate
+typed pointer.  But in order to know what type to cast it to, one
+needs to read the tag field.
+**** Put tag field as first field in each type
+Must include a tag field corresponding to each pointer to say what
+kind of node it points at.  This works but is cumbersome.
+
+** Solution 3: Tagged unions
+*** Union type:
+C includes a type constructor called "union".  union works like
+struct, except that all fields of the union share the same storage.
+This means that only one of the fields can have meaningful data at a
+time.  Whenever a field is written, the values of the other fields in
+the untion are (potentially) clobbered.  In many ways, a union is like
+a void* -- one must know in advance what kind of data is currently
+stored in the union in order to know which of its fields are valid at
+any given time.
+*** Tagged union:  union within struct
+A tagged union is a union together with a tag field that says which
+kind of data it currently holds.  C does not provide a tagged union as
+a primitive, but one can be built using enum, struct and ordinary
+(untagged) union as in the following example:
+
+  typedef enum{ IntegerType, IdentifierType, CompoundType } exptypeT;
+
+  typedef struct node* node;
+
+  struct node {
+    exptypeT tag;
+    union {
+      int intRep;
+      char* idRep;
+      struct {
+        char op;
+        node left;
+        node right;
+      } compoundRep;
+    } value;
+  };
+
+The two fields of struct node are "tag" and "value".  "tag: tells
+which kind of node it is.  "value" has type union, so only one of its
+three fields is valid, depending on tag.
+If tag == IntegerType, then intRep is valid.
+If tag == IdentifierType, then idRep is valid.
+If tag == CompoundType, then compoundRep is valid.
+Note the names can get rather lengthy.  For example, if N has type
+node, then to access its left son, one must write
+N->value.compoundRep.left .
+
+--------------------------------------------------------------------
+* Graphs
+
+** Definition
+A graph is an ordered pair G = (V, E), where V is a set of nodes
+(vertices), and E is a set of edges (arcs, arrows).  Edges can be
+directed or undirected.  A directed edge has a source node u and a
+target node v and is represented by the ordered pair (u, v).  An
+undirected edge between u and v can be presented as either the
+two-element set {u, v} (which equals the set {v, u}), or it can be
+represented by including both (u, v) and (v, u) in the set of directed
+edges.
+** Pictures
+One often draws pictures of graphs.  Nodes are represented by circles.
+Undirected edges are represented by lines joining two nodes.  Directed
+edges are represented by arrows from one node to another.  The base
+(tail) of the arrow is the source node and the arrowhead touches the
+target node.
+
+** Variations
+*** Nodes may be labeled
+Nodes may be labeled with additional information.
+*** Edges may have labels or not
+Edges might be labeled as well.  For example, a graph of an airline
+map might have nodes to represent the cities, directed edges to
+represent flights from one city to the next, and labels on the edges
+to represent the distance.
+*** Parallel edges and self loops
+Depending on the application, one might want to permit edges whose two
+endpoints are the same (called "self-loop").  One might also wish to
+allow multiple edges between a given pair of nodes, particularly in
+situations where the edges also carry labels.
+
+--------------------------------------------------------------------
+* Graph Representation
+** Adjacency matrix (unlabeled graph)
+*** Definition
+M[i][j] = true (1) if (i,j) is in E;
+        = false (0) if (i,j) not in E.
+*** Boolean matrix multiplication
+If A, B are n x n matrices, then
+C = A B (Boolean matrix product) is defined by
+C[i][j] = OR_{k=1}^n A[i][k] & B[k][j]
+*** Interpretation
+**** General
+If C = A B, where A is the adjacency matrix of G_A = (V, E_A), and B
+is the adjacency matrix of G_B = (V, E_B), then C[i][j] = true iff
+there is a path (i, k, j) from i to j going through node k, where
+(i,k) is an edge of G_A and (j,k) is an edge of G_B.
+**** Special
+If A=B, and C = A A, then C[i][j] = true iff there is a path from i to
+j with exactly two edges.
+C = A A ... A = A^k (product of k copies of A) has a 1 in position (i,
+j) iff there is a path from i to j with exactly k edges.
+**** Transitive closure
+Define A^* = I A A^2 A^3 ... .  A*[i][j] = 1 iff either i==j or there
+is a path from i to j with any number of edges.  (I is the identity
+matrix with 1's along the main diagonal and 0's elsewhere.)
+

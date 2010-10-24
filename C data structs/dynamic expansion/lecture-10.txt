@@ -1,0 +1,166 @@
+========================================
+Notes for Lecture 10 - February 14, 2008
+========================================
+
+* Arrays and subscripts (cont.)
+
+** Strings
+
+*** Strings in C consist of three separate parts:
+**** A char array
+This is the memory in which the sequence of characters comprising the
+string are stored.
+We call this the "string memory".
+**** A reference to the char array holding the characters
+We call this the "string reference" or just the "string".
+A string reference can be passed to a function as an argument or 
+returned from a function as a result.
+It's type is char*, which means "pointer to char".
+One cannot tell from the reference whether it is intended as a 
+pointer to a single isolated char variable or to a char array --
+in both cases the type is char*.
+**** A NUL ('\0') terminator character stored in string memory
+A C string is a sequence of characters terminated by a NUL character.
+The string is not valid unless it is NUL-terminated.
+
+*** Creating strings
+**** Stack allocation
+char buf[100]; creates a 100-char string memory on the stack and
+defines "buf" as the name of the reference to the beginning of the
+string memory.
+**** Dynamic allocation
+char* str = safe_malloc( 100 ); creates a 100-char string memory in
+dynamic storage, creates a char pointer on the stack named "str", and
+initializes str with the reference to the beginning of the
+just-allocated string memory.
+
+*** Putting data into strings
+Strings are initialized by copying characters and a NUL terminator
+into the string memory.
+**** Using char operations
+str[0] = 'c'; str[1] = 'a'; str[2] = 't'; str[3] = '\0';
+would put the string "cat" into the string "str".
+**** Using strcpy
+strcpy( str, "cat" );
+does the same as the above.
+
+*** Aliasing and shared string storage
+Because strings are identified with char pointers, they can be
+"copied" in two distinct ways:
+**** Data copy
+***** strcpy()
+strcpy( dest, src ); copies the string in the string memory referenced
+by src, character by character, into the string memory referenced by
+dest, which must be large enough to hold all of the characters of src
+including the terminating NUL.
+***** strncpy()
+strncpy( dest, src, 20 ); is the same as strcpy( dest, src ), except
+that it stops after writing 20 characters to dest, regardless of
+whether or not NUL has been reached.  If src contains 20 or more
+characters before the NUL, then dest will not be NUL-terminated.
+**** Pointer copy
+dest = src; stores a reference to the string memory for src into the
+pointer variable dest.  After this assignment, dest is an alias for
+src.  Both refer to the same string memory.  Whatever string memory
+dest used to point to is no longer accessible through dest (although
+other pointers might still contain references to it).
+**** String arguments
+Strings are passed to functions by aliasing (copying the reference to
+string memory).  If a function has a char* formal parameter s, and I
+call the function with a string str, then s and str refer to the same
+string memory.  The function can modify its argument by data into that
+memory.
+
+*** Common errors with strings
+**** Failure to allocate storage
+char* str;
+...
+strcpy( str, buf );
+
+You can't copy data into str until str has been set to point at string
+memory.  The strcpy() will attempt invalid memory references,
+generally resulting in a segmentation fault.
+
+To correct this, you can do one of the following
+char str[100];
+...
+strncpy( str, buf, 100 );
+--- or ---
+char* str = safe_malloc( 100 );
+...
+strncpy( str, buf, 100 );
+--- or ---
+char* str;
+char string_mem[100);
+str = string_mem;
+...
+strncpy( str, buf, 100 );
+
+**** Misuse of aliasing
+char* getstring()
+{
+  char buf[100];
+  n=scanf( "%99s", buf );
+  ...
+  return buf;
+}
+--- caller ---
+char* str;
+...
+str = getstring();
+... do something with str ...
+
+Problem here is that str is a pointer to the string reference buf, but
+the buf char array is freed when getstring() returns, making the returned
+reference to it invalid.  This might or might not seem to work, depending on
+when buf gets reused, but it is not correct.
+
+One way to correct this is to put buf in dynamic storage.  (Then the caller
+is responsible for eventually freeing it.)
+char* getstring()
+{
+  char* buf=safe_malloc( 100 );
+  n=scanf( "%99s", buf );
+  ...
+  return buf;
+}
+
+Another way is for the caller to provide the storage.
+Here, len is the size of the string memory buf.
+void getstring( int len, char* buf )
+{
+  if (len < 100) fatal( "getstring needs buffer of size >= 100" );
+  n=scanf( "%99s", buf );
+  ...
+}
+(We'd like to read up to len-1 characters instead of limiting scanf()
+to 99.  How to do so is another topic.)
+
+** Creating array storage blocks on the stack
+Strings are special cases of arrays, where the array elements are
+single characters.  In general, you can have an array of any type T.
+The comments below apply to general arrays, including strings.
+
+*** Declaration T A[k];
+This creates an array storage block on the stack (or in static
+storage) consisting of k data objects of type T.
+
+*** Usage
+The array name A behaves like a read-only pointer variable
+whose value is a reference to the first data object in the block.
+Thus, A[0] is the first data object, A[1] the second, and so forth.
+
+*** An array is not a coherent object
+An array name A is not a name for the entire storage block;
+it only references the first data object.
+The allocated length k is /not/ associated with the name A.
+
+*** Out of bounds array references
+Program must remember the allocation and take care not to
+reference data objects that do not belong to the block.
+Nothing to prevent program from referencing A[j] where
+j >= allocated size.
+
+*** Errors and security holes
+Out of bounds references are a major source of errors and
+security holes in C programs.

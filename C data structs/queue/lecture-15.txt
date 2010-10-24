@@ -1,0 +1,198 @@
+========================================
+Notes for Lecture 15 - March 6, 2008
+========================================
+
+* Recursion
+
+** Factorial
+*** Defining equations
+fact(0)=1
+fact(n) = n*fact(n-1) for n>=1
+*** Recursive implementation
+int fact( int n )
+{
+  if (n==0) return 1;
+  return n*fact(n-1);
+}
+*** Iterative implementation
+int fact( int n )
+{
+  int k;
+  int ans = 1;
+  for (k=1; k<=n; k++) ans *= k;
+  return ans;
+}
+*** Comparison
+Iterative uses only two temporaries.
+Recursive creates n+1 activation records on the stack corresponding
+to the n+1 calls fact(n), fact(n-1), ..., fact(1), fact(0).
+
+** Tail-recursion
+Special case of recursion, where no work remains to be done
+in calling function after the recursive call returns.
+Means that the current stack frame does not have to be preserved 
+during the recursive call, allowing a corresponding iterative 
+implementation
+
+** Generalized factorial
+fact_times( n, x) =  (n!*x).
+Becomes ordinary factorial when x=1.
+*** Correctness
+Based on the identity
+(n!*x) == n*(n-1)!*x = (n-1)!*(n*x)
+*** Tail-recursive implementation
+int fact_times( int n, int x )
+{
+  if ( n==0 ) return x;
+  return fact_times( n-1, n*x );
+}
+*** Iterative implementation
+int fact_times( int n, int x )
+{
+  int n0;
+  int x0;
+  while (n>0) {
+    n0 = n-1;			// compute new values for n and x
+    x0 = n*x;			// using old values
+    n = n0;			// update (n, x) to new pair
+    x = x0;
+  }
+  return x;
+}
+
+** Fibonacci numbers
+*** Defining equations
+fib(0)=fib(1)=1
+fib(n) = fib(n-1)+fib(n-1) for n>=1
+*** Recursive implementation
+int fib( int n )
+{
+  if ( n <= 1 ) return 1;
+  return fib(n-2) + fib(n-1);
+}
+*** Execution tree
+Nodes are calls on fib().
+Level0: fib(n).
+Level 1: 
+  fib(n) sons: fib(n-2), fib(n-1).
+Level 2:
+  fib(n-2) sons:  fib(n-4), fib(n-3) 
+  fib(n-1) sons:  fib(n-3), fib(n-2)
+Level 3:
+  fib(n-4) sons:  fib(n-6), fib(n-5) 
+  fib(n-3) sons:  fib(n-5), fib(n-4)
+  fib(n-3) sons:  fib(n-5), fib(n-4)
+  fib(n-2) sons:  fib(n-4), fib(n-3) 
+
+All nodes fib(n-j) on level k satisfy k <= j <= 2k; hence n-j >= n-2k.
+All nodes on level k have two sons on level k+1 if n-2k > 1.
+Follows that level k+1 has 2^(k+1) nodes if n-2k > 1.
+Equivalently, level k has 2^k nodes if n >= 2k.
+
+Follows that the tree has size exponential in n.
+
+*** Exponential growth due to solving same subproblems multiple times.
+Above makes clear that fib(n-j) is called multiple times for the
+same values of j, causing the same subcomputation to be repeated
+over and over again.
+
+*** Memo functions
+Caches previously-computed values.
+Only make recursive call when answer is not already in the cache.
+Turns recursive fib() into a linear time algorithm, since fib(n-j)
+is computed only once for each value of j.
+For fib() example, requires a cache of size n+1 to hold the values
+fib(0), fib(1), ..., fib(n).
+
+*** Iterative implementation
+A direct iterative implementation requires less cache spacs.
+int fib( int n )
+{
+  int ans[3] = {0, 1, 1};    // three number window over fib seq
+  while (n-- > 1) {          // advance window
+    ans[0] = ans[1];
+    ans[1] = ans[2];
+    ans[2] = ans[0] + ans[1];
+  }
+  return ans[2];
+}
+
+** Longest common subsequence
+
+*** Definitions
+x is a subsequence of y if x can be obtained from y by deleting letters.
+Example: "good job" is a subsequence of 
+"though often not done, object or be satisfied"
+     -  -      -  -    -  -    -  -
+z is a common subsequence of x and y if it is a subsequence of each.
+Problem:  Find the length of the longest common subsequence of x and y.
+
+*** Algorithm
+Let lcs(x, y) be the length of the longest common subsequence of 
+strings x and y.  Let a and b be single letters.  Let "" denote the
+empty string.
+1) lcs(x, "") = lcs("", y) = 0
+2) lcs(ax, by) = 1 + lcs(x, y) if a == b
+3) lcs(ax, by) = max( lcs(ax, y), lcs(x, by) ) if a != b
+
+*** Easy recursive implementation
+int lcs( char* x, char* y)
+{
+  if ( *x == '\0' || *y == '\0' ) return 0;
+  if ( *x == *y ) return 1+ lcs( x+1, y+1 );
+  int n1 = lcs(x, y+1);
+  int n2 = lcs(x+1, y);
+  return (n1 > n2) ? n1 : n2;
+}
+
+*** Complexity
+This has same problem as recursive fib.
+Same subproblem is solved many times; time is exponential.
+Can speed up with memo functions as before.
+cache needs slot for all pairs x', y', where x' is a suffix
+of x and y' a suffix of y.
+Resulting run time is O(mn), where m is the length of x and
+n the length of y.
+
+*** Iterative solution using dynamic programming
+Like fib(), simpler if one proceeds in a systematic way.
+Let m = length(x), n = length(y).
+Let A be an array of m+1 rows and n+1 columns.
+We will fill in A so that A[i][j] = lcs( x_i, y_j ),
+where x_i is the length i suffix of x and y_j is the length j
+suffix of y.  
+Note: the first character of x_i is x[m-i] and the first 
+character of y_j is y[n-j], assuming normal C array indexing.
+
+Algorithm:
+Set A[0][j] = A[i][0] = 0 for 0<=i<=m and 0<=j<=n.
+
+Whenever A[i][j-1], A[i-1][j], and A[i-1][j-1]
+all exists, we can fill in A[i][j] as follows:
+  if (x[m-i] == y[n-j]) 
+    A[i][j] = 1 + A[i-1][j-1].
+  else 
+    A[i][j] = max( A[i][j-1], A[i-1][j] ).
+
+
+* Queues
+Like a stack, but elements get inserted at one end ("back" or "tail")
+and removed from the other end ("front" or "head").
+
+** Array implementation
+*** Straightforward adaptation of array stack implementation 
+Pushes to the top of the array and pops from the bottom.  This leaves
+growing gap at the bottom -- storage that can never be reused.
+*** Circular array
+Circular array views current array as a ring, with elements[0]
+immediately following elements[maxsize-1].  Portion in use is the
+segment elements[head] through elements[tail-1], circularly around
+the array.  When tail tries to pass head, array is expanded and 
+elements[0]...elements[tail-1] are moved to the new part of the array.
+
+** Linked list implementation
+Similar to stack, but links go from oldest to newest element, and
+the queue itself has both head and tail pointers.
+
+(See demos/demo-15/1-queue.)
+

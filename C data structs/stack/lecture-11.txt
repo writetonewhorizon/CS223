@@ -1,0 +1,103 @@
+========================================
+Notes for Lecture 11 - February 19, 2008
+========================================
+
+* struct types
+Makes a new value type that can be used like any other value -- 
+differs from array.
+** Type generator -- each use creates new type
+** Use with typedef
+** Tags and their uses
+** Selectors:  e.g., x.angle
+** Pointers to structs
+*** Selector expression (*p).angle equivalent to p->angle.
+
+* typedef
+** Defines name for a type
+** Does not create a new type
+
+* Enumerated types
+** Syntactically similar to struct, including use of tags
+** Body lists identifiers with optional initializers
+** Enum values are integers, indistinguishable from other ints.
+** Useful for classification, state.
+** Often used with switch
+** Example
+typedef enum { white, red, yellow, green, blue } color;
+defines color to be the name of an enumerated type.
+
+* Casts
+** Force type conversion.
+** Syntax:  (type)expr
+*** Example:  int x; ...(double)(x+3)...
+Converts the result of the integer expression x+3 to a double.
+*** Example: int tbl[100]; ...(char*)tbl...
+Converts int* reference tbl to type char*, treating tbl as if
+it were an array of 400 char's rather than 100 int's.
+This violates semantic integrity but is sometimes useful
+(such as when you want to actually look at the underlying
+representation of an object).
+
+* Mixed mode arithmetic and implicit casts
+Most casts are implicit and occur automatically.
+
+** Rules
+*** Rules for implicit casts are complicated but generally do "right thing".
+*** Can always use explicit casts to control when conversions happen
+
+** Binary operators (+, -, *, /, ...)
+Binary operators convert both operands to a common type before
+performing the opeartion.
+*** More restrictive type is converted to less restrictive type before operation.
+**** Longer int types are less restrictive than shorter ones
+**** Doubles are less restrictive than integers
+*** Type of result is that of less restrictive type.
+**** short + long converts first arg to long and does a long operation.
+**** double + int converts second arg to double and does floating point addition.
+*** Examples
+short int sx;
+int x;
+long int lx;
+double d;
+x+3 - int addition
+d+3 - double addition after 3 converted to 3.0
+d/x - double division after x converted to double
+(x/3)+1.0 - integer division with truncation.  Truncated result of
+  (x/3) then converted to double to match type of 1.0 and the addition
+  is performed using double arithmetic.
+*** mixtures of signed and unsigned are more complicated since neither may be "less" restrictive
+
+** Assignment
+*** Converts right hand side to type of left hand side (if possible)
+a = b;
+Casts b to the type of a when allowed.
+*** Example:
+**** double to int
+int x; double d;
+x = d;
+Converts d to int, rounding towards 0, and stores result in x.
+**** int to double
+int x; double d;
+d = x;
+This is same as
+d = (double)x; i.e., Converts x to double, then stores result  in d.
+
+* Const for read-only pointers
+const Geometry* getGeoHex( Hexboard hb );
+Return pointer cannot be used to modify values in returned structure.
+
+* Logical values
+** Old C
+*** 0 means false
+*** Non-zero integer means true
+*** Comparison and logical operations return 1 for true.
+
+** Type bool
+*** Recent addition to C
+*** Must #include <stdbool.h>
+*** Boolean type is called "bool"; values are true (=1) and false (=0).
+*** Like type char, bool remains a "numeric" type
+*** Nonsensical operationss can be performed on operands of type bool.
+
+* Demo of stack abstract data type (ADT).
+

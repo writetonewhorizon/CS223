@@ -1,0 +1,173 @@
+========================================
+Notes for Lecture 14 - March 4, 2008
+========================================
+
+* Generic stacks
+General problem: How to make a stack that can be used to store
+elements of arbitrary type?
+** void* element types
+A pointer of type void* can point to a variable of any type.  A stack
+of void* elements can thus be used to store arbitrary user data.
+** Element-specific print function
+To implement the printStack() function, we must also know how to print
+the things that the void* stack pointer point to.  This was solved by
+adding a function parameter to printStack() in
+demos-13/2-stack_generic.
+** Storage management
+*** Element descriptor
+The variables that the stack pointers will reference will be created
+by the user.  Either the user retains responsibility for freeing them
+(as in demos-13/2-stack_generic), or the user should supply a function
+that freeStack() can call to free those variables.  Another parameter
+could be added to freeStack(), as was done for printStack(), but a
+cleaner approach is to bundle all of the element-specific functions
+together, pass it to newStack(), and store the bundle with the stack
+itself.  
+*** Static global constant
+The element descriptor is a collection of function pointers to fixed
+functions appropriate for a particular type of element.  As such, it
+can be declared to be a constant.  By making it static, it's lifetime
+is the lifetime of the entire program, which is what we want, and one
+doesn't have to be bothered with storage management issues.
+*** Example
+This method is illustrated in demos-14/1-stack_base
+
+* Partitions and union-find algorithm
+** Motivation
+We'd like to know how to make our Hex game player detect when the game
+is over, i.e., when one player has completed a chain across the board
+joining its two sides.
+
+Two hexagons are said to be adjacent if they share a side.  Two
+hexagons of the same color are connected if there is a path of
+adjacent cells from the first to the second such that all cells on the
+path are that same color.  A component is a maximal subset of cells
+such that every pair of cells in the component are connected.
+
+Any partially-played Hex board can be uniquely decomposed into a
+collection of monochromatic components.  Red wins if there is a Red
+component that touches the left and right borders.  Similarly, Blue
+wins if there is a Blue component that touches the top and bottom
+borders.
+
+We'd like a data structure for maintaining these components and the
+information about which borders they touch.  Initially, each unplayed cell
+is considered to be a singleton component.  When it is first played, it 
+must be joined with any components of the same color that it touches.
+Each hexagon (except on the borders) has six neighbors, so playing
+in a single cell can join together as many as three previously-separate
+components.
+
+** Partitions
+Abstractly, a partition P over a finite set U (called the universe)
+is a colletection of disjoint subsets of U that together cover U.
+That is, the union of the sets in the P is U.
+
+** Union-find problem
+*** Definition
+The union-find problem is to implement a data structure that supports
+two operations on partitions:
+find(x) finds and returns the set in P that contains element x.
+union( S1, S2 ) removes the sets S1 and S2 from P and replaces them by
+their union.
+Initially, P consists of the singleton subsets of U.
+*** Example
+Let U = {0, 1, 2, 3, 4}.  The initial partition P0 = {{0}, {1}, {2}, {3}, {4}}.
+Find(2) returns {2}.  Union( {2}, {3} ) creates a new partition 
+P1 = {{0}, {1}, {2, 3}, {4}}.  Now, find(2) and find(3) both return
+the two-element set {2,3}.  
+*** Representation
+We need to represent both U and the subsets of U that appear in P.
+We generally assume U consists of the first n integers, so 
+U = {0, 1, ..., n-1}.  We represent subsets of U (non-uniquely) by
+rooted trees.  The tree
+
+          5
+         /|\
+        7 8 2
+        |
+        9
+       / \
+      1   4
+
+is one of many trees to represent the set {1,2,4,5,7,8,9}.  In such
+trees, we imagine the links are pointing upwards.  Thus, there is a
+pointer from node 1 to node 9, a pointer from 9 to 7, and a pointer
+from 7 to 5.  The root of the tree is used to represent the whole set.
+Thus, we can say that each of these seven elements belongs  to set #5.
+*** Find operation
+To perform find(x), start at node x, walk up the tree to the root, and
+return the root label.  The time complexity of a find is proportional
+to the depth of x in the tree.
+*** Union operation
+To perform union( x, y ), where x and y label the roots of two
+distinct trees, simply make one root point to the other.  To make
+finds more efficient, we want to avoid long skinny trees and prefer
+short fat ones.  One simple rule for doing this is to keep track of
+the number of nodes in each tree (its "weight"), and to always make
+the root of the ligher tree point to the root of the heavier tree.
+(If the weights are equal, the choice is arbitrary.)  This results in
+trees of maximum depth O(log k), where k is the weight of the tree.
+*** Implementation
+See demos/demo-14/2-partition for an implemention of union-find.  This
+is a cleaned-up version of what was actually presented in class.  It
+uniformly uses root labels to represent blocks rather than pointers.
+The Block data type is now private to the implementation file
+partition.c and no longer a part of the public interface.
+
+* Recursion
+Not much to say here.  C supports recursive function application.
+Nothing special needs to be done to allow a function to call itself;
+all functions have that capability.  Every function call in C results
+in the creation of a new stack frame (in which arguments and local
+variables live).  The frame is discarded when the function returns.
+The same is true for recursive functions.  Each time a function calls
+itself, another stack frame is created.  Hence, each function
+invocation is a separate entity, even though it may be associated with
+the same code block.
+
+** Example 1: Factorial
+No discussion of recursion is complete without an example of computing
+the factorial function.  This is given in demos-14/3-fact.  Note that
+the factorial function grows very rapidly, so the demo program only
+works to compute n! for n <= 12.  For larger n, the value of n! is too
+large for an int, undetected overflow occurs, and the program outputs 
+an incorrect answer.
+
+** Example 2: Tail recursive computation of factorial
+A function whose only recursive call is the very last thing it does
+before returning is called tail recursive.  See demos-14/4-tailfact
+for an example of how to compute factorial in a tail-recursive way.
+There is a close relationship between tail-recursive functions and
+iterative functions (that is, functions that use loops instead of
+recursion) that we have not explored.
+
+** Example 3: Fibonacci numbers
+The Fibonacci sequence begins with 1, 1.  Thereafter, each number is
+the sum of the previous two.  Hence, the next number is 1+1=2, the
+next after that is 1+2=3, then 2+3=5, and so forth.  This gives the
+sequence 1, 1, 2, 3, 5, 8, 13, 21, 34, ... .  The Fibonacci function
+fib(n) returns element number n of this sequence, where the first element
+is numbered 0.  Thus, fib(4) = 5.
+*** Exponential behavior or simple recursive implementation
+There is a simple recursive program for computing fib(n) based on the
+equation fib(n) = fib(n-2) + fib(n-1).  When implemented, it works, but
+it becomes very slow as n grows large.  This is because fib(k) is computed
+over and over again for smaller values of k.
+To see this, look at the way computation proceeds.  
+To compute fib(4), we must compute fib(3) and fib(2).  
+ To compute fib(3), we must compute fib(2) and fib(1) [base case]/
+  To compute fib(2), we must compute fib(1) [base case] and fib(0) [base case].
+ To compute fib(2),  we must compute fib(1) [base case] and fib(0) [base case].
+Even in this small example, we end up computing fib(2) twice, once in the
+computation of fib(4) and once in the computation of fib(3).
+The total number of recursive calls of fib() on itself grows exponentially
+in n.
+*** Memo functions
+The exponential behavior of the simple recursive implementation of fib()
+can be avoided by the use of "memo functions".  This just means creating
+a cache of previously-computed values of fib() and looking in the cache
+before computing fib(k) for some k to see if the result is already known.
+In this way, fib(k) is computed only once for each value of k<=n, resulting
+in time complexity O(n) instead of O(c^n).
+(See demos-14/5-fib for examples of fib(), both with and without caching.)

@@ -1,0 +1,143 @@
+========================================
+Notes for Lecture 16 - March 25, 2008
+========================================
+
+* Shared objects and deep vs shallow copies
+** Shared objects
+An object is shared when more than one reference to it exists.
+*** Aliases
+Each pointer to a shared object can be considered to be an alias for
+the object.  Changes to the shared object are reflected through all
+pointers.
+*** Example
+char buf[100] = "Hello world"
+char* p = buf;
+char* q;
+q = p;
+The last assignment makes q and p aliases for the shared object buf.
+*p = 'A';
+changes what q "sees", e.g., printf( "%s", q ); will now print
+"Aello world"
+** Shallow copy
+A shallow copy copies only the reference to the object.
+The assignment q = p; above is a shallow copy.
+** Deep copy
+A deep copy makes a copy of the entire structure.  To make a deep
+copy of the string p above, we could do
+q = malloc( strlen(p)+1 );
+strcpy( q, p );
+
+
+* More on linked lists.
+
+** Useful to distinguish between cell and list types
+A cell is a structure with two fields: value and next, which is a
+pointer to another cell.  Cells can be linked together into a chain.
+A list is a structure with a field head that points to the first 
+cell of a chain if the list is non-empty, or is NULL if the list is
+empty.
+The reason for the separate list structure is to have a single
+uniform object that can represent all lists, including the empty
+list.
+The list structure might also contain other useful fields, e.g.,
+an integer that is always kept equal to the current length of the
+list.  This allows the length to be found quickly instead of having
+to scan down the chain of cells one at a time to find the end.
+A list might also contain a field "tail" that points to the last
+cell in the chain of a non-empty list.  This is useful for adding
+elements to the end of a list, or for implementing the operation
+of concatenating two lists together.
+
+
+* Sorting a list
+There are many different sorting algorithms.  Here we discuss sorting 
+based on merging.
+
+** Merge operation
+*** Definition
+A merge takes two sorted lists and combines them together into a single
+sorted list.
+*** Example
+Merge of sorted lists 1,3,4,8,12 with 2,5,6,9 results in the
+sorted list 1,2,3,4,5,6,8,9,12
+*** Implementation
+Let first(x) be the first element of x, rest(x) be the
+remainder of x after the first element has been deleted, prepend(a,x) be
+the result of prepending prepending "a" to the list "x", append(x,a) be
+the result of appending "a" to the end of list "x", and isempty(x) be true 
+iff x is the empty list
+
+*** Recursive definition of merge
+To merge( x, y ):
+  if (isempty(x)) return y;
+  if (isempty(y)) return x;
+  if ( first(x) < first(y) ) 
+     return prepend(first(x), merge(rest(x), y))
+  else
+     return prepend(first(y), merge(x, rest(y)))
+*** Iterative definition
+Similarly easy.  (See demo.)
+
+** Basic merge sort algorithm:  split, sort pieces, merge
+Split list x into two pieces x1 and x2 of roughly equal length.
+Sort x1 recursively.
+Sort x2 recursively.
+Merge x1 and x2.
+Base case of recursion is when list length <= 1, since all such lists
+are already sorted.
+
+*** Problem of knowing list length
+Must know list length to know where to split.
+Can either scan list to find length or (more efficiently) store it
+in the list header.
+
+*** Problem of finding the place to split
+Must locate place to split.  No easy way to do this other than
+walk down the list.
+
+** Recursive list-merge-sort
+By making a more general recursive algorithm, the special scan to
+split the list can be avoided.
+cell* sortFront( cell* x, int n, cell** yp );
+Returns two results:
+  x1 is the result of sorting the first len cells of x.
+  x2 is the unsorted tail of x that remains after the first len cells are removed
+x1 is returned via the arg list (i.e., by storing into *yp); x2 is the
+normal function return value.
+
+To sort a list x of length n, one simply calls sortFront( x, n, &y )
+and returns y.
+
+    sortFront() has an easy recursive definition.
+
+    if (n==0) {
+       *yp = NULL;
+       return x;
+    }
+    if (n==1) {
+       *yp = first(x);
+       return rest(x);
+    }
+    int n1 = n/2;
+    int n2 = n-n1;
+    cell* x1;
+    cell* x2;
+    cell* y;
+    cell* z;
+    y = sortFront( x, n1, &x1 );
+    z = sortFront( y, n2, &x2 );
+    *yp = z;
+    return merge(x1, x2);
+
+Here, first(x) returns the first cell of x as a chain of length 1;
+rest(x) is the tail of x after the first element.  For efficiency,
+first() and merge() can be implemented destructively, that is, they
+destroy their arguments in the course of computing their result.
+However, if this is done, then care must be taken to find rest(x)
+before splitting off the first cell of x from the chain in order to
+computer first(x).  See the demo code for an example of how to do
+this.
+
+** Listsort demo
+(See demo-16/1-listsort)
+

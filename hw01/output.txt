@@ -1,0 +1,22 @@
+#1
+dev5@aphid:~> cd cs223
+dev5@aphid:~/cs223> cd projects
+dev5@aphid:~/cs223/projects> gcc -c wisdom.c
+dev5@aphid:~/cs223/projects> gcc -Wall -std=c99 -pedantic -g -01 -o wisdom wisdom.o 
+pearls.o
+dev5@aphid:~/cs223/projects> ./wisdom
+Welcome to Wisdom! Brought to you by:
+Douglas von Kohorn, CPSC223.
+dev5@aphid:~/cs223/projects> 
+-------------------------------------------------
+#2
+dev5@aphid:~> cd cs223
+dev5@aphid:~/cs223> cd projects
+dev5@aphid:~/cs223/projects> ls
+pearls.h  pearls.o  sampleoutputhomework1.txt  wisdom  wisdom.c  wisdom.o
+dev5@aphid:~/cs223/projects> gcc -c wisdom.c
+dev5@aphid:~/cs223/projects> gcc -Wall -std=c99 -pedantic -g -01 -o wisdom wisdom.o pearls.o
+dev5@aphid:~/cs223/projects> ./wisdom
+Welcome to Wisdom! Brought to you by:
+Douglas von Kohorn, CPSC223.
+dev5@aphid:~/cs223/projects> 

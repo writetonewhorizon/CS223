@@ -1,0 +1,188 @@
+========================================
+Notes for Lecture 13 - February 28, 2008
+========================================
+
+* const
+
+[See handout 13 for a more thorough explanation of const]
+
+** A variable of a const type is readonly
+const int size = 12;
+A pointer can be constant, or can point to a constant,
+or both.
+const int* p;	// p points to a readonly int.
+int* const p;	// p points to a r/w int, but p itself can't be changed
+const int* const p;  // p is readonly and points to a readonly variable
+
+** Order of type qualifier and type specifier doesn't matter
+int const size = 12;	    // same as above
+int const* p;	 	    // p points to a readonly int.
+
+** Caution with typedef
+typedef int* int_ptr;
+const int_ptr p;	// p is a readonly pointer to a r/w int
+int_ptr const p;	// same
+
+** Constant opaque types
+Suppose we define
+    typedef struct stack* Stack;
+Stack is what we've been calling an opaque type.
+Suppose we want a readonly Stack?
+Doesn't work to declare
+const Stack s;
+because that makes s a constant pointer, not a pointer to a constant
+struct stack.
+Instead, we define a companion type
+    typedef const struct stack* const_Stack;
+(See demos-13/1-stack_with_const.)
+
+
+* Function types, function pointers, and mapping function
+
+** Function types
+*** Definition
+Every function has a type that specifies the types of its
+parameters and the type of its result.
+*** Function prototypes
+A function prototype assigns a function type to a function name.
+Example:  int myfun( char, double );
+declares myfun to have function type "(char, double) returning int".
+*** Special case: no arguments
+(void) indicates a function that takes no arguments.
+Example  int myfun(void);
+*** Special case: no result
+A return type void indicates a function that returns no result.
+
+** Function pointer
+*** Definition
+A function pointer is a pointer that stores a reference to a function
+(of a specified type).
+*** Declaration
+A function pointer declaration looks just like a function prototype
+except that *name appears where the function name would ordinarily
+be written.
+Example:  int (*p) (double, char);
+declares p to be a pointer to a 2-argument function that takes
+double and a char and returns an int.
+*** Use
+Function pointers can be used like other pointers.
+Example:  
+int f1(double x, char ch) { ... }
+int f2(double x, char ch) { ... }
+int (*p) (double, char);
+p = &f1;
+int k1 = (*p)( 3.4, 'a' );
+p = &f2;
+int k2 = (*p)( 7.1, 'b' );
+*** Function parameters
+One function can take another function as a parameter
+Example:
+int myfun( double x, char ch, int (*q)(double, char) )
+{
+    return (*q)(x*x, ch);
+}
+The third parameter is a function pointer.  The body of myfun calls
+the function that p references.  To call myfun, one might write
+... myfun( 3.4, 'a', &f2 );
+
+*** Automatic dereferencing
+In most contexts, the * and & above can be omitted.  Hence,
+the above examples could be simplified to:
+int f1(double x, char ch) { ... }
+int f2(double x, char ch) { ... }
+int (*p) (double, char);
+p = f1;
+int k1 = p( 3.4, 'a' );
+p = f2;
+int k2 = p( 7.1, 'b' );
+...
+int myfun( double x, char ch, int q(double, char) )
+{
+    return q(x*x, ch);
+}
+... myfun( 3.4, 'a', f2 );
+Note that the one place the * cannot be dropped is in the
+declaration of the pointer variable p.
+
+** Function types and typedef
+Typedef makes function types less confusing.
+*** Function types with typedef
+Example:  typedef int Myfun(double, char);
+defines "Myfun" to be the type of a function taking a double and 
+a char to an int.  The declaration
+Myfun foo;
+would then declare a prototype for foo, just as if one had written
+int foo( double, char );
+In the above example, p could have been declared as
+Myfun* p;
+that is, p is a pointer to a function taking a double and a char to an
+int.
+*** Function pointer typedef
+Example:  typedef int (*MyfunPtr)(double, char);
+defines "MyfunPtr" to be of type pointer to a function taking a double
+and a char to an int.  The declaration
+MyfunPtr foo;
+is not a prototype but declares "foo" to be a pointer variable.
+In the above example, p could have been declared as
+MyfunPtr p;
+that is, p is a pointer to a function taking a double and a char to an
+int.
+(See demos-13/2-stack_generic, where a function parameter is used to
+pass an element-specific print function to the generic printStack()
+function.
+
+
+* Linked lists
+
+** Definition
+A linked list stores a sequence of data elements each in its own
+cell.  The cells are linked together in a chain, where each cell
+contains a pointer to the next cell in the chain.  The "next" 
+field of the last cell contains the special reference value NULL.
+
+** Implementation
+*** Chain of cells
+typedef
+struct cell {
+       int element;
+       struct cell* next;
+}* Cell;
+Defines the basic cell structure for a list of int elements.
+Note that there is a kind of circularity in this definition, since
+the "next" field of a struct cell refers to the struct cell that is
+being defined.  This is okay because next is a pointer, and it's 
+generally okay to talk about pointers to incompletely defined objects
+as long as those pointers are not being dereferenced.
+Note that neither of the following are okay:
+typedef
+struct cell {
+       int element;
+       struct cell next;  <--- can't have a struct cell inside itself
+}* Cell;
+or 
+typedef
+struct cell {
+       int element;
+       Cell next;  <--- Cell is not defined at this point
+}* Cell;
+*** List header
+One generally wants another data structure to represent the list
+object itself.  For example, to represent a stack, one might define
+typedef
+struct stack {
+       Cell head;
+       int size;
+}* Stack;
+Here, "head" points to the first struct cell of the chain that
+comprises the stack contents.  The advantage of having a separate
+struct stack to represent the stack itself rather than saying that
+a stack IS a struct cell is that the empty stack (which consists of
+zero struct cells) is no longer a special case -- it's just a stack
+whose "head" is NULL and whose "size" is 0.
+(See demos-13/3-stack_list for a linked list implementation of our
+stack interface.  Note that printStack() in this implementation 
+prints the stack in the opposite order from the printStack() in the
+array-based implementation.  Since we didn't specify the print order,
+then both implementations must be considered as "correct", even though
+they produce different outputs.
+
